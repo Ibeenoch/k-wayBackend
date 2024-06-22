@@ -55,7 +55,7 @@ export const createPost = async(req, res) => {
                 console.log('opooo', r)
                 res.status(201).json(r.populate('owner'));
             });
-            
+
         }
         
     } catch (error) {
@@ -139,8 +139,12 @@ export const getAllPosts = async(req, res) => {
 
 export const deleteAPost = async(req, res) => {
     try {
-        const posts = await Post.findByIdAndDelete(req.params.id)
-        res.status(200).json(posts);
+        const post = await Post.findById(req.params.id);
+        if(post.owner.toString() !== req.user._id.toString()){
+            return res.status(400).json({message: 'User not authorized to delete this post'});
+        };
+        const postdeleted = await Post.findByIdAndDelete(req.params.id);
+        res.status(200).json(postdeleted);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)

@@ -7,7 +7,7 @@ const postRouter = express.Router();
 
 postRouter.post('/create', protect, multiUpload, createPost );
 postRouter.put('/update/:id', protect, multiUpload, updatePost );
-postRouter.delete('/delete/:id',  deleteAPost );
+postRouter.delete('/delete/:id', protect,  deleteAPost );
 postRouter.get('/all', getAllPosts );
 
 export default postRouter;
