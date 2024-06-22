@@ -1,0 +1,56 @@
+import mongoose, { Schema } from "mongoose";
+
+const userSchema = new Schema({
+   
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    address: {
+        type: String,
+    },
+    handle: {
+        type: String,
+    },
+    fullname: {
+        type: String,
+    },
+    profession: {
+        type: String,
+    },
+    dateOfBirth: {
+        type: String,
+    },
+    bio: {
+        type: String,
+    },
+    profilePhoto: {
+        url: String,
+        public_id: String,
+    },
+    followers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    following: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ]
+}, {
+    timestamps: true,
+});
+
+export const User = mongoose.model('User', userSchema);

@@ -1,0 +1,67 @@
+import mongoose, { Schema } from "mongoose";
+
+const commentSchema = new Schema({
+    owner:  {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    content: {
+        type: String,
+        required: true,
+    },
+    privacy: {
+        type: String,
+        default: 'public'
+    },
+    replies: []
+}, {
+    timestamps: true,
+})
+
+commentSchema.post('save', async(doc, next) => {
+    doc.replies = commentSchema;
+    next();
+})
+
+const postSchema = new Schema({
+    content: {
+        type: String,
+    },
+    photos: [],
+    video: {},
+    views: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    owner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+   comments: [commentSchema],
+    likes: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }
+    ],    
+    reShare: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],    
+    bookmark: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],    
+}, {
+    timestamps: true,
+});
+
+export const Comment = mongoose.model('Comment', commentSchema);
+export const Post = mongoose.model('Post', postSchema);
