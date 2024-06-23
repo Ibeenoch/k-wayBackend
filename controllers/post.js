@@ -1,5 +1,5 @@
 import { uploader, videoUploader } from "../middleware/cloudinaryUpload.js";
-import { Post } from "../model/post.js";
+import { Comment, Post } from "../model/post.js";
 import express from 'express';
 import { User } from "../model/user.js";
 
@@ -157,20 +157,53 @@ export const likePost = async(req, res) => {
         const post = await Post.findById(req.params.id);
         const userId = await User.findById(req.params.userId);
         if(!post){
-            return res.status(404).json({ message: 'post not found'})
+            return res.status(404).json({ message: 'post not found'});
         };
 
         if(!userId){
-            return res.status(404).json({ message: 'user not found'})
+            return res.status(404).json({ message: 'user not found'});
+        };
+        console.log('compare the two', post.likes, req.params.id)
+        if(post.likes.length > 0 && post.likes.includes(userId).toString()){
+            const index = post.likes.findIndex((p) => p.toString() === userId.toString());
+            post.likes.splice(index, 1);
+            await post.save();
+            res.status(200).json(post);
+        }else{
+            post.likes.push(userId);
+            await post.save();
+            console.log(post);
+            res.status(200).json(post);
+        }
+        
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const bookmarkPost = async(req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const userId = await User.findById(req.params.userId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'});
         };
 
-        if(!post.likes.includes(userId).toString()){
-        post.likes.push(userId);
-        await post.save();
-        console.log(post);
-        res.status(200).json(post);
+        if(!userId){
+            return res.status(404).json({ message: 'user not found'});
+        };
+
+        if(post.bookmark.length > 0 && post.bookmark.includes(userId).toString()){
+            const index = post.bookmark.findIndex((p) => p.toString() === userId.toString());
+            post.bookmark.splice(index, 1);
+            await post.save();
+            res.status(200).json(post);
         }else{
-            res.status(300).json({ message: 'user already liked the post'})
+            post.bookmark.push(userId);
+            await post.save();
+            console.log(post);
+            res.status(200).json(post);
         }
         
     } catch (error) {
@@ -216,6 +249,123 @@ export const rePost = async(req, res) => {
 
         res.status(200).json(repost)
         
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+};
+
+export const commentPost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const user = await User.findById(req.params.userId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+
+        if(!userId){
+            return res.status(404).json({ message: 'user not found'})
+        };
+        
+        const comment = await Comment.create({
+            content: req.body.comment,
+            owner: user._id
+        });
+
+        post.comments.push(comment);
+        await post.save();
+        res.status(201).json(comment);
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const editCommentPost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const parentComment = await Comment.findById(req.params.commentId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+
+        if(!parentComment){
+            return res.status(404).json({ message: 'parentComment not found'})
+        };
+        
+        parentComment.content = req.body.comment;
+        await parentComment.save();
+
+        res.status(201).json(parentComment);
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const deleteCommentPost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'});
+        };
+        const parentComment = await Comment.findByIdAndDelete(req.params.commentId);
+
+        res.status(201).json({message: 'comment deleted'});
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+
+export const replyCommentPost = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const parentComment = await Comment.findById(req.params.commentId);
+        const user = await User.findById(req.params.userId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+        if(!user){
+            return res.status(404).json({ message: 'user not found'})
+        };
+
+        if(!parentComment){
+            return res.status(404).json({ message: 'parentComment not found'})
+        };
+        
+        const reply = await Comment.create({
+            content: req.body.comment,
+            owner: user._id,
+        });
+
+        parentComment.replies.push(reply);
+         await parentComment.save()
+
+        res.status(201).json(reply);
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const allPostComments = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+
+        const allComments = await Comment.find().populate('replies');
+
+
+        res.status(201).json(allComments);
+
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
