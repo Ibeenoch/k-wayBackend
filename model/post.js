@@ -46,13 +46,30 @@ const postSchema = new Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         }
-    ],    
-    reShare: [
+    ],  
+    allReshare:  [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: 'User',
         }
-    ],    
+    ],  
+    reShared: {
+        type: Boolean,
+        default: false
+    },
+    reShare: {
+        type: [{
+           user: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+          post:  {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Post",
+            }
+        }],
+        default: []
+    },    
     bookmark: [
         {
             type: mongoose.Schema.Types.ObjectId,

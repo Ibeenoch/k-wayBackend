@@ -1,6 +1,7 @@
 import { uploader, videoUploader } from "../middleware/cloudinaryUpload.js";
 import { Post } from "../model/post.js";
 import express from 'express';
+import { User } from "../model/user.js";
 
 export const createPost = async(req, res) => {
     try {
@@ -38,7 +39,7 @@ export const createPost = async(req, res) => {
                 privacy,
                 photos: imgurls.length > 0 ? imgurls : [],
                 video: videourls.length > 0 ? videourls && videourls[0] : {},
-                owner: req.user,
+                owner: req.user._id,
             }).then((r) => {
                 console.log('opooo', r)
                 res.status(201).json(r.populate('owner'));
@@ -129,7 +130,7 @@ console.log('loo ', postExist)
 
 export const getAllPosts = async(req, res) => {
     try {
-        const posts = await Post.find().populate('owner');
+        const posts = await Post.find().populate('owner reShare.user reShare.post');
         res.status(200).json(posts);
     } catch (error) {
         res.status(500).json({ message: error });
@@ -145,6 +146,76 @@ export const deleteAPost = async(req, res) => {
         };
         const postdeleted = await Post.findByIdAndDelete(req.params.id);
         res.status(200).json(postdeleted);
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const likePost = async(req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const userId = await User.findById(req.params.userId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+
+        if(!userId){
+            return res.status(404).json({ message: 'user not found'})
+        };
+
+        if(!post.likes.includes(userId).toString()){
+        post.likes.push(userId);
+        await post.save();
+        console.log(post);
+        res.status(200).json(post);
+        }else{
+            res.status(300).json({ message: 'user already liked the post'})
+        }
+        
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const rePost = async(req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        const userId = await User.findById(req.params.userId);
+        if(!post){
+            return res.status(404).json({ message: 'post not found'})
+        };
+
+        if(!userId){
+            return res.status(404).json({ message: 'user not found'})
+        };
+        if(post.allReshare.includes(userId)){
+            return res.status(400).json({ message: 'already reshared'})
+        }
+
+        const newPost = new Post({
+            content: post.content,
+            photos: post.photos,
+            video: post.video,
+            owner: post.owner,
+            likes: post.likes,
+            bookmark: post.bookmark,
+            comments: post.comments,
+            reShared: true,
+            reShare: [{
+                user: userId._id,
+                post: post._id
+            }],
+            
+        });
+        newPost.allReshare.push(userId._id);
+        const repost = await newPost.save().then((post) => {
+          return  post.populate('reShare.user reShare.post')
+        });
+
+        res.status(200).json(repost)
+        
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
