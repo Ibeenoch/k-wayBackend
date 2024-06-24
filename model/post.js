@@ -6,6 +6,11 @@ const commentSchema = new Schema({
         ref: 'User',
         required: true
     },
+    post:  {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post',
+        required: true
+    },
     content: {
         type: String,
         required: true,
@@ -14,15 +19,18 @@ const commentSchema = new Schema({
         type: String,
         default: 'public'
     },
-    replies: []
+    replies: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment'
+    }]
 }, {
     timestamps: true,
 })
 
-commentSchema.post('save', async(doc, next) => {
-    doc.replies = commentSchema;
-    next();
-})
+// commentSchema.post('save', async(doc, next) => {
+//     doc.replies = commentSchema;
+//     next();
+// })
 
 const postSchema = new Schema({
     content: {
@@ -40,7 +48,10 @@ const postSchema = new Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
-   comments: [commentSchema],
+    comments: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Comment'
+        }],
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,

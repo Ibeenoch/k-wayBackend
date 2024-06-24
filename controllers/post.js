@@ -130,8 +130,27 @@ console.log('loo ', postExist)
 
 export const getAllPosts = async(req, res) => {
     try {
-        const posts = await Post.find().populate('owner reShare.user reShare.post');
+        const posts = await Post.find({})
+        .populate('owner')
+        .populate({
+            path: 'reShare',
+            populate: [
+                { path: 'user', model: 'User' }, 
+                { path: 'post', model: 'Post' }  
+            ]
+        });
+        console.log('all the post ', posts)
         res.status(200).json(posts);
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const getAPost = async(req, res) => {
+    try {
+        const post = await Post.findById(req.params.id).populate('owner reShare.user reShare.post');
+        res.status(200).json(post);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
@@ -154,7 +173,7 @@ export const deleteAPost = async(req, res) => {
 
 export const likePost = async(req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
+        const post = await Post.findById(req.params.id).populate('owner');
         const userId = await User.findById(req.params.userId);
         if(!post){
             return res.status(404).json({ message: 'post not found'});
@@ -184,7 +203,7 @@ export const likePost = async(req, res) => {
 
 export const bookmarkPost = async(req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
+        const post = await Post.findById(req.params.id).populate('owner');
         const userId = await User.findById(req.params.userId);
         if(!post){
             return res.status(404).json({ message: 'post not found'});
@@ -244,7 +263,7 @@ export const rePost = async(req, res) => {
         });
         newPost.allReshare.push(userId._id);
         const repost = await newPost.save().then((post) => {
-          return  post.populate('reShare.user reShare.post')
+          return  post.populate('reShare.user reShare.post owner')
         });
 
         res.status(200).json(repost)
@@ -257,24 +276,31 @@ export const rePost = async(req, res) => {
 
 export const commentPost = async (req, res) => {
     try {
+        console.log(req.body);
         const post = await Post.findById(req.params.id);
         const user = await User.findById(req.params.userId);
+        console.log('post and user ', post, user);
         if(!post){
             return res.status(404).json({ message: 'post not found'})
         };
 
-        if(!userId){
+        if(!user){
             return res.status(404).json({ message: 'user not found'})
         };
         
         const comment = await Comment.create({
             content: req.body.comment,
-            owner: user._id
-        });
+            owner: req.user._id,
+            post: post._id
+        }).then(async(r) => {
+            r.populate('owner');
 
-        post.comments.push(comment);
+        post.comments.push(r._id);
         await post.save();
-        res.status(201).json(comment);
+        console.log(post, r);
+        res.status(201).json(r);
+        });
+        
 
     } catch (error) {
         res.status(500).json({ message: error });
@@ -284,20 +310,19 @@ export const commentPost = async (req, res) => {
 
 export const editCommentPost = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
-        const parentComment = await Comment.findById(req.params.commentId);
-        if(!post){
-            return res.status(404).json({ message: 'post not found'})
-        };
-
-        if(!parentComment){
-            return res.status(404).json({ message: 'parentComment not found'})
+        const comment = await Comment.findById(req.params.commentId);
+       
+        if(!comment){
+            return res.status(404).json({ message: 'comment not found'})
         };
         
-        parentComment.content = req.body.comment;
-        await parentComment.save();
-
-        res.status(201).json(parentComment);
+        comment.content = req.body.comment;
+        await comment.save().then((c) => {
+            c.populate('owner')
+             console.log(c)
+        res.status(200).json(c);
+        })
+       
 
     } catch (error) {
         res.status(500).json({ message: error });
@@ -346,7 +371,7 @@ export const replyCommentPost = async (req, res) => {
         parentComment.replies.push(reply);
          await parentComment.save()
 
-        res.status(201).json(reply);
+        res.status(201).json(reply.populate('owner replies'));
 
     } catch (error) {
         res.status(500).json({ message: error });
@@ -356,15 +381,20 @@ export const replyCommentPost = async (req, res) => {
 
 export const allPostComments = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
+        const post = await Post.findById(req.params.id).populate({
+            path: 'comments',
+            populate: {
+                path: 'owner',
+                model: 'User'
+            }
+        });
         if(!post){
-            return res.status(404).json({ message: 'post not found'})
+            return res.status(404).json({ message: 'post not found'});
         };
 
-        const allComments = await Comment.find().populate('replies');
+        console.log('this are all the post comments ', post, post.comments)
 
-
-        res.status(201).json(allComments);
+        res.status(201).json(post.comments);
 
     } catch (error) {
         res.status(500).json({ message: error });
