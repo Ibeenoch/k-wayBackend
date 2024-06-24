@@ -1,7 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleWare.js';
 import upload, { multiUpload } from '../middleware/fileMiddleware.js';
-import { allPostComments, allRepliesForAComment, bookmarkPost, commentPost, createPost, deleteAPost, deleteCommentPost, editCommentPost, getAPost, getAllPosts, likePost, rePost, replyCommentPost, updatePost } from '../controllers/post.js';
+import { allPostComments, allRepliesForAComment, bookmarkPost, commentPost, createPost, deleteAPost, deleteCommentPost, editCommentPost, getAPost, getAllPosts, likeAComment, likePost, rePost, replyCommentPost, updatePost } from '../controllers/post.js';
 
 const postRouter = express.Router();
 
@@ -13,6 +13,7 @@ postRouter.put('/reshare/:id/:userId', protect,  rePost );
 postRouter.post('/replycomment/:commentId', protect,  replyCommentPost );
 postRouter.get('/replies/:commentId',  allRepliesForAComment );
 postRouter.put('/updatecomment/:commentId', protect,  editCommentPost );
+postRouter.put('/likecomment/:commentId', protect,  likeAComment );
 postRouter.delete('/deletecomment/:id/:commentId', protect,  deleteCommentPost );
 postRouter.post('/comment/:id/:userId', protect,  commentPost );
 postRouter.get('/comment/:id', allPostComments );

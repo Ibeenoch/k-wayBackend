@@ -279,7 +279,7 @@ export const commentPost = async (req, res) => {
         console.log(req.body);
         const post = await Post.findById(req.params.id);
         const user = await User.findById(req.params.userId);
-        console.log('post and user ', post, user);
+
         if(!post){
             return res.status(404).json({ message: 'post not found'})
         };
@@ -292,14 +292,14 @@ export const commentPost = async (req, res) => {
             content: req.body.comment,
             owner: req.user._id,
             post: post._id
-        }).then(async(r) => {
-            r.populate('owner');
-
-        post.comments.push(r._id);
-        await post.save();
-        console.log(post, r);
-        res.status(201).json(r);
         });
+
+        post.comments.push(comment._id);
+        await post.save();
+        const getComment = await Comment.findById(comment._id).populate('owner');
+        console.log('postcomment ', getComment);
+        res.status(201).json(getComment);
+    
         
 
     } catch (error) {
@@ -363,6 +363,37 @@ export const replyCommentPost = async (req, res) => {
              res.status(201).json(r);
         });
 
+       
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const likeAComment = async (req, res) => {
+    try {
+        const parentComment = await Comment.findById(req.params.commentId).populate('owner');
+
+        if(!parentComment){
+            return res.status(404).json({ message: 'parentComment not found'})
+        };
+
+        
+        if(parentComment.likes.length > 0 && parentComment.likes.includes(req.user._id.toString())){
+            console.log('parentcomment ', parentComment.likes[0].toString(), req.user._id.toString())
+            const index = parentComment.likes.findIndex((p) => p.toString() === req.user._id.toString());
+            parentComment.likes.splice(index, 1);
+            await parentComment.save()
+            // console.log(parentComment)
+            res.status(200).json(parentComment);
+        }else{
+            parentComment.likes.push(req.user._id);
+            await parentComment.save();
+            // console.log(parentComment)
+            res.status(200).json(parentComment);
+            
+        }
        
 
     } catch (error) {
