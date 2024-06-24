@@ -310,19 +310,15 @@ export const commentPost = async (req, res) => {
 
 export const editCommentPost = async (req, res) => {
     try {
-        const comment = await Comment.findById(req.params.commentId);
+        const comment = await Comment.findById(req.params.commentId).populate('owner');
        
         if(!comment){
             return res.status(404).json({ message: 'comment not found'})
         };
         
         comment.content = req.body.comment;
-        await comment.save().then((c) => {
-            c.populate('owner')
-             console.log(c)
-        res.status(200).json(c);
-        })
-       
+        await comment.save();
+        res.status(200).json(comment);
 
     } catch (error) {
         res.status(500).json({ message: error });
@@ -349,29 +345,49 @@ export const deleteCommentPost = async (req, res) => {
 
 export const replyCommentPost = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
+        console.log('req body content ', req.body);
         const parentComment = await Comment.findById(req.params.commentId);
-        const user = await User.findById(req.params.userId);
-        if(!post){
-            return res.status(404).json({ message: 'post not found'})
-        };
-        if(!user){
-            return res.status(404).json({ message: 'user not found'})
-        };
 
         if(!parentComment){
             return res.status(404).json({ message: 'parentComment not found'})
         };
         
         const reply = await Comment.create({
-            content: req.body.comment,
-            owner: user._id,
+            content: req.body.content,
+            owner: req.user._id,
+        }).then(async(r) => {
+            r.populate('owner replies');
+             parentComment.replies.push(r);
+             await parentComment.save();
+             console.log('replycomment ', r)
+             res.status(201).json(r);
         });
 
-        parentComment.replies.push(reply);
-         await parentComment.save()
+       
 
-        res.status(201).json(reply.populate('owner replies'));
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const allRepliesForAComment = async (req, res) => {
+    try {
+        console.log(req.params.commentId)
+        const comment = await Comment.findById(req.params.commentId).populate({
+            path: 'replies',
+            populate: {
+                path: 'owner',
+                model: 'User'
+            }
+        });
+
+        if(!comment){
+            return res.status(404).json({ message: 'comment not found'});
+        };
+
+        console.log('all comment replies ', comment.replies);
+        res.status(201).json(comment.replies);
 
     } catch (error) {
         res.status(500).json({ message: error });

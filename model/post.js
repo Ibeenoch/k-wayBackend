@@ -9,7 +9,6 @@ const commentSchema = new Schema({
     post:  {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Post',
-        required: true
     },
     content: {
         type: String,
@@ -22,7 +21,11 @@ const commentSchema = new Schema({
     replies: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Comment'
-    }]
+    }],
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
 }, {
     timestamps: true,
 })
