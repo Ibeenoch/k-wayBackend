@@ -33,6 +33,10 @@ const userSchema = new Schema({
     bio: {
         type: String,
     },
+    posts:  [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post',
+    }],
     profilePhoto: {
         url: String,
         public_id: String,

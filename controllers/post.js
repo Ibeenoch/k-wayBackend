@@ -40,7 +40,10 @@ export const createPost = async(req, res) => {
                 photos: imgurls.length > 0 ? imgurls : [],
                 video: videourls.length > 0 ? videourls && videourls[0] : {},
                 owner: req.user._id,
-            }).then((r) => {
+            }).then(async(r) => {
+                const user = await User.findById(req.user._id);
+                user.posts.push(r._id);
+                await user.save();
                 console.log('opooo', r)
                 res.status(201).json(r.populate('owner'));
             })
@@ -52,7 +55,10 @@ export const createPost = async(req, res) => {
                 content,
                 privacy,
                 owner: req.user._id,
-            }).then((r) => {
+            }).then(async(r) => {
+                const user = await User.findById(req.user._id);
+                user.posts.push(r._id);
+                await user.save();
                 console.log('opooo', r)
                 res.status(201).json(r.populate('owner'));
             });
@@ -163,6 +169,10 @@ export const deleteAPost = async(req, res) => {
         if(post.owner.toString() !== req.user._id.toString()){
             return res.status(400).json({message: 'User not authorized to delete this post'});
         };
+        const user = await User.findById(req.user._id);
+        const index = user.posts.findIndex( (r ) => r._id.toString() === post._id.toString());
+        user.posts.splice(index, 1);
+        await user.save();
         const postdeleted = await Post.findByIdAndDelete(req.params.id);
         res.status(200).json(postdeleted);
     } catch (error) {

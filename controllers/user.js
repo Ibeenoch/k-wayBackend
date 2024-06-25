@@ -304,7 +304,8 @@ export const userFollowers = async (req, res) => {
   try {
     // my id becos i am the one they want to follow
     const user = await User.findById(req.params.userId);
-
+    // mine
+    const me = await User.findById(req.user._id);
     if(!user){
       res.status(404).json('User not found');
       return;
@@ -315,13 +316,18 @@ export const userFollowers = async (req, res) => {
       const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
       user.followers.splice(index, 1);
       await user.save();
+      const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
+      me.following.splice(indexMe, 1);
+      await me.save();
       console.log('user followed ', user);
       res.status(200).json(user);
     }else{
       user.followers.push(req.user._id);
       await user.save();
-      console.log('user followed ', user);
-      res.status(200).json(user);
+      me.following.push(user._id);
+      await me.save();
+      console.log('user followed ', me);
+      res.status(200).json(me);
     }
 
   } catch (error) {
@@ -334,6 +340,7 @@ export const userFollowing = async (req, res) => {
   try {
     // the others id becos i am the one that want to follow
     const user = await User.findById(req.params.userId);
+    const me = await User.findById(req.user._id);
 
     if(!user){
       res.status(404).json('User not found');
@@ -345,14 +352,65 @@ export const userFollowing = async (req, res) => {
       const index = user.following.findIndex((f) => f.toString() === req.user._id.toString());
       user.following.splice(index, 1);
       await user.save();
+      const indexMe = me.followers.findIndex((f) => f.toString() === user._id.toString());
+      me.followers.splice(indexMe, 1);
+      await user.save();
       console.log('user following ', user);
       res.status(200).json(user);
     }else{
       user.following.push(req.user._id);
       await user.save();
-      console.log('user following ', user);
-      res.status(200).json(user);
+      me.followers.push(req.user._id);
+      await me.save();
+      console.log('user following ', me);
+      res.status(200).json(me);
     }
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error)
+  }
+}
+
+export const getFollowing = async (req, res) => {
+  try {
+    // the others id becos i am the one that want to follow
+    const me = await User.findById(req.user._id).populate('following');
+    if(req.params._id.toString() === me._id){
+      res.status(404).json('You cannot be following yourself');
+      return; 
+    }
+
+    if(!me){
+      res.status(404).json('User not found');
+      return;
+    }
+    // req.user._id is mine
+
+   res.status(200).json(me.following);
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error)
+  }
+}
+
+export const getFollowers = async (req, res) => {
+  try {
+    // the others id becos i am the one that want to follow
+    const me = await User.findById(req.user._id).populate('followers');
+    if(req.params._id.toString() === me._id){
+      res.status(404).json('You cannot be following yourself');
+      return; 
+    }
+
+    if(!me){
+      res.status(404).json('User not found');
+      return;
+    }
+    // req.user._id is mine
+
+   res.status(200).json(me.followers);
 
   } catch (error) {
     res.status(500).json({ message: error })
