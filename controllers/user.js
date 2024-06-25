@@ -315,19 +315,27 @@ export const userFollowers = async (req, res) => {
     if(user.followers.includes(req.user._id.toString())){
       const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
       user.followers.splice(index, 1);
-      await user.save();
       const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
       me.following.splice(indexMe, 1);
+      await user.save();
       await me.save();
-      console.log('user followed ', user);
-      res.status(200).json(user);
+      const token = generateToken(me._id);
+      console.log('user followed ', me);
+      res.status(200).json({
+          ...me,
+          token
+      });
     }else{
       user.followers.push(req.user._id);
-      await user.save();
       me.following.push(user._id);
+      await user.save();
       await me.save();
+      const token = generateToken(me._id);
       console.log('user followed ', me);
-      res.status(200).json(me);
+      res.status(200).json({
+          ...me,
+          token
+      });
     }
 
   } catch (error) {
@@ -351,19 +359,27 @@ export const userFollowing = async (req, res) => {
     if(user.following.includes(req.user._id.toString())){
       const index = user.following.findIndex((f) => f.toString() === req.user._id.toString());
       user.following.splice(index, 1);
-      await user.save();
       const indexMe = me.followers.findIndex((f) => f.toString() === user._id.toString());
       me.followers.splice(indexMe, 1);
       await user.save();
-      console.log('user following ', user);
-      res.status(200).json(user);
+      await user.save(); 
+      const token = generateToken(me._id);
+      console.log('user followed ', me);
+      res.status(200).json({
+          ...me,
+          token
+      });
     }else{
       user.following.push(req.user._id);
-      await user.save();
       me.followers.push(req.user._id);
+      await user.save();
       await me.save();
-      console.log('user following ', me);
-      res.status(200).json(me);
+      const token = generateToken(me._id);
+      console.log('user followed ', me);
+      res.status(200).json({
+          ...me,
+          token
+      });
     }
 
   } catch (error) {
@@ -386,8 +402,12 @@ export const getFollowing = async (req, res) => {
       return;
     }
     // req.user._id is mine
-
-   res.status(200).json(me.following);
+   const token = generateToken(me._id);
+   console.log('user followed ', me);
+   res.status(200).json({
+       ...me,
+       token
+   });
 
   } catch (error) {
     res.status(500).json({ message: error })
@@ -409,11 +429,45 @@ export const getFollowers = async (req, res) => {
       return;
     }
     // req.user._id is mine
-
-   res.status(200).json(me.followers);
+    const token = generateToken(me._id);
+    console.log('user followed ', me);
+    res.status(200).json({
+        ...me,
+        token
+    });
 
   } catch (error) {
     res.status(500).json({ message: error })
-    console.log(error)
+    console.log(error);
+  }
+}
+
+export const getAUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).populate('posts following followers');
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      ...user, token
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error);
+  }
+}
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const user = await User.find().populate('posts following followers');
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      ...user, token
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error);
   }
 }

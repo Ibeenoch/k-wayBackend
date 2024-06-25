@@ -1,5 +1,5 @@
 import express from 'express';
-import { changePassword, editProfile, getFollowers, getFollowing, login, recoveryEmailLink, register, userFollowers, userFollowing, verifyEmail } from '../controllers/user.js';
+import { changePassword, editProfile, getAUser, getAllUsers, getFollowers, getFollowing, login, recoveryEmailLink, register, userFollowers, userFollowing, verifyEmail } from '../controllers/user.js';
 import { protect } from '../middleware/authMiddleWare.js';
 import upload from '../middleware/fileMiddleware.js';
 
@@ -15,5 +15,7 @@ userRouter.put('/follower/:userId', protect, userFollowers );
 userRouter.put('/following/:userId', protect, userFollowing );
 userRouter.get('/following', protect, getFollowing );
 userRouter.get('/followers', protect, getFollowers );
+userRouter.get('/', getAllUsers );
+userRouter.get('/:userId', getAUser );
 
 export default userRouter;
