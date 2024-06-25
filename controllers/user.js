@@ -446,7 +446,7 @@ export const getAUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).populate('posts following followers');
     const token = generateToken(user._id);
-
+    console.log('user ', user);
     res.status(200).json({
       ...user, token
     });
@@ -461,7 +461,7 @@ export const getAllUsers = async (req, res) => {
   try {
     const user = await User.find().populate('posts following followers');
     const token = generateToken(user._id);
-
+    console.log('user ', ...user);
     res.status(200).json({
       ...user, token
     });
