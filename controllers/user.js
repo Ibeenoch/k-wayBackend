@@ -299,3 +299,63 @@ export const changePassword = async (req, res) => {
     console.log(error)
   }
 }
+
+export const userFollowers = async (req, res) => {
+  try {
+    // my id becos i am the one they want to follow
+    const user = await User.findById(req.params.userId);
+
+    if(!user){
+      res.status(404).json('User not found');
+      return;
+    }
+    // req.user._id is the id of the person that wants to follow me
+
+    if(user.followers.includes(req.user._id.toString())){
+      const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
+      user.followers.splice(index, 1);
+      await user.save();
+      console.log('user followed ', user);
+      res.status(200).json(user);
+    }else{
+      user.followers.push(req.user._id);
+      await user.save();
+      console.log('user followed ', user);
+      res.status(200).json(user);
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error)
+  }
+}
+
+export const userFollowing = async (req, res) => {
+  try {
+    // the others id becos i am the one that want to follow
+    const user = await User.findById(req.params.userId);
+
+    if(!user){
+      res.status(404).json('User not found');
+      return;
+    }
+    // req.user._id is mine
+
+    if(user.following.includes(req.user._id.toString())){
+      const index = user.following.findIndex((f) => f.toString() === req.user._id.toString());
+      user.following.splice(index, 1);
+      await user.save();
+      console.log('user following ', user);
+      res.status(200).json(user);
+    }else{
+      user.following.push(req.user._id);
+      await user.save();
+      console.log('user following ', user);
+      res.status(200).json(user);
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: error })
+    console.log(error)
+  }
+}
