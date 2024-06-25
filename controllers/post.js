@@ -355,15 +355,14 @@ export const replyCommentPost = async (req, res) => {
         const reply = await Comment.create({
             content: req.body.content,
             owner: req.user._id,
-        }).then(async(r) => {
-            r.populate('owner replies');
-             parentComment.replies.push(r);
-             await parentComment.save();
-             console.log('replycomment ', r)
-             res.status(201).json(r);
-        });
+        })
+        
+        parentComment.replies.push(reply._id);
 
-       
+         await parentComment.save();
+         const getReply = await Comment.findById(reply._id).populate('owner replies');
+         console.log('replycomment ', getReply)
+         res.status(201).json(getReply);      
 
     } catch (error) {
         res.status(500).json({ message: error });
