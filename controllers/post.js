@@ -185,6 +185,7 @@ export const likePost = async(req, res) => {
     try {
         const post = await Post.findById(req.params.id).populate('owner');
         const userId = await User.findById(req.params.userId);
+        const io = req.app.get('io');
         if(!post){
             return res.status(404).json({ message: 'post not found'});
         };
@@ -202,6 +203,11 @@ export const likePost = async(req, res) => {
             post.likes.push(userId);
             await post.save();
             console.log(post);
+            const notify = {
+                message: `${post.owner._id} like your post`,
+                postId: post._id,
+            };
+            io.emit('postLiked', notify)
             res.status(200).json(post);
         }
         
