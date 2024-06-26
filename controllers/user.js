@@ -300,9 +300,9 @@ export const changePassword = async (req, res) => {
   }
 }
 
-export const userFollowers = async (req, res) => {
+export const followAndUnfollow = async (req, res) => {
   try {
-    // my id becos i am the one they want to follow
+    // others id 
     const user = await User.findById(req.params.userId);
     // mine
     const me = await User.findById(req.user._id);
@@ -312,18 +312,21 @@ export const userFollowers = async (req, res) => {
     }
     // req.user._id is the id of the person that wants to follow me
 
-    if(user.followers.includes(req.user._id.toString())){
-      const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
+    if(user.followers.includes(req.user._id)){
+      const index = user.followers.findIndex((f) => f === req.user._id);
+      console.log('found other index ', index);
       user.followers.splice(index, 1);
-      const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
-      me.following.splice(indexMe, 1);
       await user.save();
+      const indexMe = me.following.findIndex((f) => f === user._id);
+      console.log('found mine index ', index);
+      me.following.splice(indexMe, 1);
       await me.save();
       const token = generateToken(me._id);
-      console.log('user followed ', me);
+      // console.log('user followed ', me);
+      const mine = { ...me, token }
       res.status(200).json({
-          ...me,
-          token
+          mine,
+          user
       });
     }else{
       user.followers.push(req.user._id);
@@ -331,10 +334,11 @@ export const userFollowers = async (req, res) => {
       await user.save();
       await me.save();
       const token = generateToken(me._id);
-      console.log('user followed ', me);
+      // console.log('user followed ', me);
+      const mine = { ...me, token }
       res.status(200).json({
-          ...me,
-          token
+          mine,
+          user
       });
     }
 
@@ -344,49 +348,6 @@ export const userFollowers = async (req, res) => {
   }
 }
 
-export const userFollowing = async (req, res) => {
-  try {
-    // the others id becos i am the one that want to follow
-    const user = await User.findById(req.params.userId);
-    const me = await User.findById(req.user._id);
-
-    if(!user){
-      res.status(404).json('User not found');
-      return;
-    }
-    // req.user._id is mine
-
-    if(user.following.includes(req.user._id.toString())){
-      const index = user.following.findIndex((f) => f.toString() === req.user._id.toString());
-      user.following.splice(index, 1);
-      const indexMe = me.followers.findIndex((f) => f.toString() === user._id.toString());
-      me.followers.splice(indexMe, 1);
-      await user.save();
-      await user.save(); 
-      const token = generateToken(me._id);
-      console.log('user followed ', me);
-      res.status(200).json({
-          ...me,
-          token
-      });
-    }else{
-      user.following.push(req.user._id);
-      me.followers.push(req.user._id);
-      await user.save();
-      await me.save();
-      const token = generateToken(me._id);
-      console.log('user followed ', me);
-      res.status(200).json({
-          ...me,
-          token
-      });
-    }
-
-  } catch (error) {
-    res.status(500).json({ message: error })
-    console.log(error)
-  }
-}
 
 export const getFollowing = async (req, res) => {
   try {
