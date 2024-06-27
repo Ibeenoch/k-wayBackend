@@ -193,14 +193,16 @@ export const likePost = async(req, res) => {
         if(!userId){
             return res.status(404).json({ message: 'user not found'});
         };
-        console.log('compare the two', post.likes, req.params.id)
-        if(post.likes.length > 0 && post.likes.includes(userId).toString()){
-            const index = post.likes.findIndex((p) => p.toString() === userId.toString());
+        //req.params.id
+        console.log('compare the two', post.likes,  req.params.userId)
+        if(post.likes.includes(req.params.userId.toString())){
+            const index = post.likes.findIndex((p) => p.toString() === req.params.userId.toString());
             post.likes.splice(index, 1);
+            console.log('user like ', index,  post.likes.length);
             await post.save();
             res.status(200).json(post);
         }else{
-            post.likes.push(userId);
+            post.likes.push(req.params.userId);
             await post.save();
             const findReceiver = await User.findById(post.owner._id);
             const newNofication = await Notification.create({
@@ -214,6 +216,7 @@ export const likePost = async(req, res) => {
                 userId
             };
             io.emit('postLiked', notify);
+            console.log('user push like ', post.likes.length);
             res.status(200).json(post);
         }
         
@@ -236,17 +239,18 @@ export const bookmarkPost = async(req, res) => {
             return res.status(404).json({ message: 'user not found'});
         };
 
-        if(post.bookmark.length > 0 && post.bookmark.includes(userId).toString()){
-            const index = post.bookmark.findIndex((p) => p.toString() === userId.toString());
+        if(post.bookmark.includes(userId._id.toString())){
+            const index = post.bookmark.findIndex((p) => p.toString() === userId._id.toString());
             post.bookmark.splice(index, 1);
             await post.save();
             res.status(200).json(post);
         }else{
-            post.bookmark.push(userId);
+            post.bookmark.push(userId._id);
             await post.save();
             console.log(post);
             res.status(200).json(post);
         }
+        console.log('post.bookmark  ', post.bookmark.length);
         
     } catch (error) {
         res.status(500).json({ message: error });
@@ -265,7 +269,7 @@ export const rePost = async(req, res) => {
         if(!userId){
             return res.status(404).json({ message: 'user not found'})
         };
-        if(post.allReshare.includes(userId)){
+        if(post.allReshare.includes(userId._id)){
             return res.status(400).json({ message: 'already reshared'})
         }
 
@@ -288,7 +292,7 @@ export const rePost = async(req, res) => {
         const repost = await newPost.save().then((post) => {
           return  post.populate('reShare.user reShare.post owner')
         });
-
+        console.log('reshared length ', newPost.allReshare.length);
         res.status(200).json(repost)
         
     } catch (error) {
@@ -460,6 +464,53 @@ export const allPostComments = async (req, res) => {
 
         res.status(201).json(post.comments);
 
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const getLikes = async( req, res) => {
+    try {
+        console.log(req.params);
+        //get post from the req params;
+        const post = await Post.findById(req.params.postId).populate('likes');
+        if(!post){
+            res.status(400).json('post not found');
+        }
+        res.status(200).json(post.likes);
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const getBookmark = async( req, res) => {
+    try {
+        console.log(req.params);
+        //get post from the req params;
+        const post = await Post.findById(req.params.postId).populate('bookmark');
+        console.log('post ', post);
+        if(!post){
+            res.status(400).json('post not found');
+        }
+        console.log(post.bookmark);
+        res.status(200).json(post.bookmark);
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const getReshare = async( req, res) => {
+    try {
+        console.log(req.params);
+        //get post from the req params;
+        const post = await Post.findById(req.params.postId).populate('allReshare');
+        if(!post){
+            res.status(400).json('post not found');
+        }
+        res.status(200).json(post.allReshare);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)

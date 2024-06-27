@@ -13,8 +13,8 @@ userRouter.put('/password/reset/:id', changePassword );
 userRouter.put('/update/:id', protect, upload.single('image'), editProfile );
 userRouter.put('/follower/:userId', protect, followAndUnfollow );
 userRouter.put('/following/:userId', protect, followAndUnfollow );
-userRouter.get('/following', protect, getFollowing );
-userRouter.get('/followers', protect, getFollowers );
+userRouter.get('/following/:userId',  getFollowing );
+userRouter.get('/followers/:userId',  getFollowers );
 userRouter.get('/', getAllUsers );
 userRouter.get('/:userId', getAUser );
 

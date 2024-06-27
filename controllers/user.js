@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import Cloudinary from 'cloudinary'
 import { uploader } from '../middleware/cloudinaryUpload.js';
+import userRouter from '../routes/user.js';
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_TOKEN, { expiresIn: '1d' });
@@ -333,7 +334,7 @@ export const followAndUnfollow = async (req, res) => {
       await me.save();
       console.log(me.following, user.followers);
       const token = generateToken(me._id);
-      // console.log('user followed ', me);
+      console.log('user followed ', me.followers.length, ' user following ', me.following.length);
       const mine = { ...me, token }
      return res.status(200).json({
           mine,
@@ -347,6 +348,7 @@ export const followAndUnfollow = async (req, res) => {
       await me.save();
       const token = generateToken(me._id);
       // console.log('user followed ', me);
+      console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
       const mine = { ...me, token }
       res.status(200).json({
           mine,
@@ -363,22 +365,12 @@ export const followAndUnfollow = async (req, res) => {
 
 export const getFollowing = async (req, res) => {
   try {
-    // the others id becos i am the one that want to follow
-    const me = await User.findById(req.user._id).populate('following');
-    if(req.params._id.toString() === me._id){
-      res.status(404).json('You cannot be following yourself');
-      return; 
-    }
-
-    if(!me){
-      res.status(404).json('User not found');
-      return;
-    }
-    // req.user._id is mine
-   const token = generateToken(me._id);
-   console.log('user followed ', me);
+    const user = await User.findById(req.params.userId).populate('following');
+   
+   const token = generateToken(user._id);
+   console.log('user followed ', user);
    res.status(200).json({
-       ...me,
+       ...user,
        token
    });
 
@@ -390,21 +382,11 @@ export const getFollowing = async (req, res) => {
 
 export const getFollowers = async (req, res) => {
   try {
-    // the others id becos i am the one that want to follow
-    const me = await User.findById(req.user._id).populate('followers');
-    if(req.params._id.toString() === me._id){
-      res.status(404).json('You cannot be following yourself');
-      return; 
-    }
-
-    if(!me){
-      res.status(404).json('User not found');
-      return;
-    }
-    // req.user._id is mine
-    const token = generateToken(me._id);
+    const user = await User.findById(req.params.userId).populate('followers');
+   
+    const token = generateToken(user._id);
     res.status(200).json({
-        ...me,
+        ...user,
         token
     });
 
@@ -416,6 +398,7 @@ export const getFollowers = async (req, res) => {
 
 export const getAUser = async (req, res) => {
   try {
+    console.log(req.params);
     const user = await User.findById(req.params.userId).populate('posts following followers');
     const token = generateToken(user._id);
     res.status(200).json({
@@ -430,10 +413,10 @@ export const getAUser = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const user = await User.find().populate('posts following followers');
-    const token = generateToken(user._id);
+    const users = await User.find().populate('posts following followers');
+    const token = generateToken(users._id);
     res.status(200).json({
-      ...user, token
+      users
     });
 
   } catch (error) {
