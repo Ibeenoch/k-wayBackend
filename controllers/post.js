@@ -2,6 +2,7 @@ import { uploader, videoUploader } from "../middleware/cloudinaryUpload.js";
 import { Comment, Post } from "../model/post.js";
 import express from 'express';
 import { User } from "../model/user.js";
+import { Notification } from "../model/notification.js";
 
 export const createPost = async(req, res) => {
     try {
@@ -145,7 +146,6 @@ export const getAllPosts = async(req, res) => {
                 { path: 'post', model: 'Post' }  
             ]
         });
-        console.log('all the post ', posts)
         res.status(200).json(posts);
     } catch (error) {
         res.status(500).json({ message: error });
@@ -202,20 +202,27 @@ export const likePost = async(req, res) => {
         }else{
             post.likes.push(userId);
             await post.save();
-            console.log(post);
-            const notify = {
-                message: `${post.owner._id} like your post`,
+            const findReceiver = await User.findById(post.owner._id);
+            const newNofication = await Notification.create({
+                message: `${findReceiver.fullname} liked your post`,
                 postId: post._id,
+                userId
+            });
+            const notify = {
+                message: `${findReceiver.fullname} liked your post`,
+                postId: post._id,
+                userId
             };
-            io.emit('postLiked', notify)
+            io.emit('postLiked', notify);
             res.status(200).json(post);
         }
         
     } catch (error) {
         res.status(500).json({ message: error });
-        console.log(error)
+        console.log(error);
     }
 }
+
 
 export const bookmarkPost = async(req, res) => {
     try {
@@ -313,7 +320,6 @@ export const commentPost = async (req, res) => {
         post.comments.push(comment._id);
         await post.save();
         const getComment = await Comment.findById(comment._id).populate('owner');
-        console.log('postcomment ', getComment);
         res.status(201).json(getComment);
     
         
@@ -377,7 +383,6 @@ export const replyCommentPost = async (req, res) => {
 
          await parentComment.save();
          const getReply = await Comment.findById(reply._id).populate('owner replies');
-         console.log('replycomment ', getReply)
          res.status(201).json(getReply);      
 
     } catch (error) {
@@ -400,12 +405,10 @@ export const likeAComment = async (req, res) => {
             const index = parentComment.likes.findIndex((p) => p.toString() === req.user._id.toString());
             parentComment.likes.splice(index, 1);
             await parentComment.save()
-            // console.log(parentComment)
             res.status(200).json(parentComment);
         }else{
             parentComment.likes.push(req.user._id);
             await parentComment.save();
-            // console.log(parentComment)
             res.status(200).json(parentComment);
             
         }
@@ -419,7 +422,6 @@ export const likeAComment = async (req, res) => {
 
 export const allRepliesForAComment = async (req, res) => {
     try {
-        console.log(req.params.commentId)
         const comment = await Comment.findById(req.params.commentId).populate({
             path: 'replies',
             populate: {

@@ -6,6 +6,7 @@ import { Server} from 'socket.io';
 import { connectDb } from './config/db.js';
 import userRouter from './routes/user.js';
 import postRouter from './routes/post.js';
+import notificationRouter from './routes/notification.js';
 dotenv.config();
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/user', userRouter);
 app.use('/post', postRouter);
+app.use('/notification', notificationRouter);
 
 io.on('connection', (socket) => {
     console.log('new client connected');

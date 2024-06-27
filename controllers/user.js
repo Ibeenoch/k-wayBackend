@@ -41,10 +41,23 @@ try {
           rejectUnauthorized: true,
         },
       });
-      const randomId = Math.floor(Math.random() * 100627892)
+      
+    // continue and hash password
 
-      const link = `http://localhost:3000/verify/email/${randomId}`;
-      console.log('random  ', randomId)
+    const salt = 10;
+    const genSalt = bcrypt.genSaltSync(salt);
+    const hashPassword = await bcrypt.hash(password, genSalt)
+
+    const newuser = await User.create({
+        email, password: hashPassword
+    })
+
+
+      console.log(newuser);
+      const token = generateToken(newuser._id);
+      const user = { email: newuser.email, token, _id: newuser._id };
+
+      const link = `http://localhost:3000/verify/email/${user._id}`;
       const mailOptions = {
         from: "fredenoch1@gmail.com",
         to: email,
@@ -98,22 +111,8 @@ try {
         console.log(info.response)
         }
       });
-
-    // continue and hash password
-
-    const salt = 10;
-    const genSalt = bcrypt.genSaltSync(salt);
-    const hashPassword = await bcrypt.hash(password, genSalt)
-
-    const newuser = await User.create({
-        email, password: hashPassword
-    })
-
-
-      console.log(newuser);
-      const token = generateToken(newuser._id);
-      const user = { email: newuser.email, token, _id: newuser._id };
       res.status(201).json(user);
+
     
 } catch (error) {
     res.status(500).json({ message: error })
@@ -174,7 +173,7 @@ export const verifyEmail = async(req, res) => {
 export const editProfile = async(req, res) => {
     try {
           const { fullname, dateOfBirth, handle, address, profession, bio } = req.body;
-          console.log('requser  ', req.user, req.file, fullname, dateOfBirth, handle, address, profession, bio);
+          console.log('requser  ', req.user);
             
             if(!req.user){
                 res.status(404).json('user not found')
@@ -302,6 +301,7 @@ export const changePassword = async (req, res) => {
 
 export const followAndUnfollow = async (req, res) => {
   try {
+    console.log(req.params);
     // others id 
     const user = await User.findById(req.params.userId);
     // mine
@@ -310,24 +310,36 @@ export const followAndUnfollow = async (req, res) => {
       res.status(404).json('User not found');
       return;
     }
+
+    if(me._id === user._id){
+      console.log('same users ', me._id, ' and ', user._id);
+      res.status(400).json('the same users');
+      return;
+    }
     // req.user._id is the id of the person that wants to follow me
 
     if(user.followers.includes(req.user._id)){
-      const index = user.followers.findIndex((f) => f === req.user._id);
+      console.log('this id exist alreay as ', req.user._id);
+      const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
       console.log('found other index ', index);
       user.followers.splice(index, 1);
       await user.save();
-      const indexMe = me.following.findIndex((f) => f === user._id);
-      console.log('found mine index ', index);
+
+      if(me.following.includes(user._id)){
+        console.log('i exist')
+      const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
+      console.log('found mine index ', indexMe);
       me.following.splice(indexMe, 1);
       await me.save();
+      console.log(me.following, user.followers);
       const token = generateToken(me._id);
       // console.log('user followed ', me);
       const mine = { ...me, token }
-      res.status(200).json({
+     return res.status(200).json({
           mine,
           user
       });
+    }
     }else{
       user.followers.push(req.user._id);
       me.following.push(user._id);
@@ -391,7 +403,6 @@ export const getFollowers = async (req, res) => {
     }
     // req.user._id is mine
     const token = generateToken(me._id);
-    console.log('user followed ', me);
     res.status(200).json({
         ...me,
         token
@@ -407,7 +418,6 @@ export const getAUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).populate('posts following followers');
     const token = generateToken(user._id);
-    console.log('user ', user);
     res.status(200).json({
       ...user, token
     });
@@ -422,7 +432,6 @@ export const getAllUsers = async (req, res) => {
   try {
     const user = await User.find().populate('posts following followers');
     const token = generateToken(user._id);
-    console.log('user ', ...user);
     res.status(200).json({
       ...user, token
     });
