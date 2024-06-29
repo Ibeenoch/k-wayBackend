@@ -1,11 +1,12 @@
 import { Notification } from "../model/notification.js";
+import { User } from "../model/user.js";
 
-export const getNotifications = async(req, res) => {
+export const getNotificationsOfAUser = async(req, res) => {
     try {
-        const notifications = await Notification.find().populate('sender receiver post');
+        const user = await User.findById(req.params.userId).populate('notification');
 
-        console.log(notifications);
-        res.status(200).json(notifications);
+        console.log(user.notification);
+        res.status(200).json(user.notification);
         
     } catch (error) {
         res.status(500).json({ message: error });

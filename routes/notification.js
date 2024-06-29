@@ -1,9 +1,9 @@
 import express from 'express';
-import { getANotification, getNotifications } from '../controllers/notification.js';
+import { getANotification, getNotificationsOfAUser,  } from '../controllers/notification.js';
 import { protect } from '../middleware/authMiddleWare.js';
 const notificationRouter = express.Router();
 
-notificationRouter.get('/all', protect, getNotifications);
+notificationRouter.get('/user/:userId', protect, getNotificationsOfAUser);
 notificationRouter.get('/:id', protect, getANotification);
 
 export default notificationRouter;

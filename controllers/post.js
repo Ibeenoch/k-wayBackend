@@ -208,13 +208,18 @@ export const likePost = async(req, res) => {
             const findReceiver = await User.findById(post.owner._id);
             const newNofication = await Notification.create({
                 message: `${findReceiver.fullname} liked your post`,
-                postId: post._id,
-                userId
+                post: post._id,
+                sender: req.params.userId,
+                receiver: post.owner._id,
             });
+            findReceiver.notification.push(newNofication._id);
+            await findReceiver.save();
+
             const notify = {
                 message: `${findReceiver.fullname} liked your post`,
-                postId: post._id,
-                userId
+                post: post._id,
+                sender: req.params.userId,
+                receiver: post.owner._id,
             };
             io.emit('postLiked', notify);
             console.log('user push like ', post.likes.length);
@@ -232,6 +237,7 @@ export const bookmarkPost = async(req, res) => {
     try {
         const post = await Post.findById(req.params.id).populate('owner');
         const userId = await User.findById(req.params.userId);
+        const io = req.app.get('io');
         if(!post){
             return res.status(404).json({ message: 'post not found'});
         };
@@ -248,6 +254,23 @@ export const bookmarkPost = async(req, res) => {
         }else{
             post.bookmark.push(userId._id);
             await post.save();
+            const findReceiver = await User.findById(post.owner._id);
+            const newNofication = await Notification.create({
+                message: `${findReceiver.fullname} bookmark your post`,
+                post: post._id,
+                sender: req.params.userId,
+                receiver: post.owner._id,
+            });
+            findReceiver.notification.push(newNofication._id);
+            await findReceiver.save();
+
+            const notify = {
+                message: `${findReceiver.fullname} bookmarked your post`,
+                post: post._id,
+                sender: req.params.userId,
+                receiver: post.owner._id,
+            };
+            io.emit('postBookmarked', notify);
             console.log(post);
             res.status(200).json(post);
         }
@@ -263,6 +286,7 @@ export const rePost = async(req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         const userId = await User.findById(req.params.userId);
+        const io = req.app.get('io');
         if(!post){
             return res.status(404).json({ message: 'post not found'})
         };
@@ -290,6 +314,24 @@ export const rePost = async(req, res) => {
             
         });
         newPost.allReshare.push(userId._id);
+        const findReceiver = await User.findById(post.owner._id);
+        const newNofication = await Notification.create({
+            message: `${findReceiver.fullname} reshared your post`,
+            post: post._id,
+            sender: req.params.userId,
+            receiver: post.owner._id,
+        });
+        findReceiver.notification.push(newNofication._id);
+        await findReceiver.save();
+
+        const notify = {
+            message: `${findReceiver.fullname} reshared your post`,
+            post: post._id,
+            sender: req.params.userId,
+            receiver: post.owner._id,
+        };
+        io.emit('postReshared', notify);
+
         const repost = await newPost.save().then((post) => {
           return  post.populate('reShare.user reShare.post owner')
         });
@@ -307,7 +349,7 @@ export const commentPost = async (req, res) => {
         console.log(req.body);
         const post = await Post.findById(req.params.id);
         const user = await User.findById(req.params.userId);
-
+        const io = req.app.get('io');
         if(!post){
             return res.status(404).json({ message: 'post not found'})
         };
@@ -324,6 +366,25 @@ export const commentPost = async (req, res) => {
 
         post.comments.push(comment._id);
         await post.save();
+
+        const findReceiver = await User.findById(post.owner._id);
+        const newNofication = await Notification.create({
+            message: `${findReceiver.fullname} commented on your post`,
+            post: post._id,
+            sender: req.params.userId,
+            receiver: post.owner._id,
+        });
+        findReceiver.notification.push(newNofication._id);
+        await findReceiver.save();
+
+        const notify = {
+            message: `${findReceiver.fullname} commented on your post`,
+            post: post._id,
+            sender: req.params.userId,
+            receiver: post.owner._id,
+        };
+        io.emit('postComment', notify);
+
         const getComment = await Comment.findById(comment._id).populate('owner');
         res.status(201).json(getComment);
     
@@ -374,6 +435,7 @@ export const replyCommentPost = async (req, res) => {
     try {
         console.log('req body content ', req.body);
         const parentComment = await Comment.findById(req.params.commentId);
+        const io = req.app.get('io');
 
         if(!parentComment){
             return res.status(404).json({ message: 'parentComment not found'})
@@ -387,6 +449,30 @@ export const replyCommentPost = async (req, res) => {
         parentComment.replies.push(reply._id);
 
          await parentComment.save();
+
+         
+        const findReceiver = await User.findById(parentComment.owner._id);
+        const newNofication = await Notification.create({
+            message: `${findReceiver.fullname} replied your comment`,
+            comment: parentComment._id,
+            sender: req.params.userId,
+            receiver: parentComment.owner._id,
+        });
+        findReceiver.notification.push(newNofication._id);
+        await findReceiver.save();
+
+        const notify = {
+            message: `${findReceiver.fullname} replied your comment`,
+            comment: parentComment._id,
+            sender: req.params.userId,
+            receiver: parentComment.owner._id,
+        };
+        io.emit('commentReplied', notify);
+        
+        const getComment = await Comment.findById(comment._id).populate('owner');
+        res.status(201).json(getComment);
+    
+
          const getReply = await Comment.findById(reply._id).populate('owner replies');
          res.status(201).json(getReply);      
 
@@ -399,7 +485,7 @@ export const replyCommentPost = async (req, res) => {
 export const likeAComment = async (req, res) => {
     try {
         const parentComment = await Comment.findById(req.params.commentId).populate('owner');
-
+        const io = req.app.get('io');
         if(!parentComment){
             return res.status(404).json({ message: 'parentComment not found'})
         };
@@ -414,6 +500,25 @@ export const likeAComment = async (req, res) => {
         }else{
             parentComment.likes.push(req.user._id);
             await parentComment.save();
+
+            const findReceiver = await User.findById(parentComment.owner._id);
+            const newNofication = await Notification.create({
+                message: `${findReceiver.fullname} liked your comment`,
+                comment: parentComment._id,
+                sender: req.params.userId,
+                receiver: parentComment.owner._id,
+            });
+            findReceiver.notification.push(newNofication._id);
+            await findReceiver.save();
+    
+            const notify = {
+                message: `${findReceiver.fullname} liked your comment`,
+                comment: parentComment._id,
+                sender: req.params.userId,
+                receiver: parentComment.owner._id,
+            };
+            io.emit('commentLiked', notify);
+            
             res.status(200).json(parentComment);
             
         }

@@ -5,22 +5,23 @@ const notificationSchema = new Schema({
         type: String,
         required: true,
     },
-    posts:  [{
+    post: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Post',
-    }],
-    sender: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ],
-    receiver: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ]
+    },
+    comment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment',
+    },
+    sender:  {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    receiver: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
+  
 }, {
     timestamps: true,
 });

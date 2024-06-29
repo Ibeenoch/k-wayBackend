@@ -307,6 +307,7 @@ export const followAndUnfollow = async (req, res) => {
     const user = await User.findById(req.params.userId);
     // mine
     const me = await User.findById(req.user._id);
+    const io = req.app.get('io');
     if(!user){
       res.status(404).json('User not found');
       return;
@@ -347,6 +348,23 @@ export const followAndUnfollow = async (req, res) => {
       const token = generateToken(me._id);
       // console.log('user followed ', me);
       console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
+      
+      // semd to the user that u followed him
+      const newNofication = await Notification.create({
+          message: `${me.fullname} followed you`,
+          sender: me._id,
+          receiver: user._id,
+      });
+      me.notification.push(newNofication._id);
+      await me.save();
+
+      const notify = {
+        message: `${me.fullname} followed you`,
+        sender: me._id,
+        receiver: user._id,
+      };
+      io.emit('foloowed', notify);
+      
       res.status(200).json({
         ...me, token
       });
