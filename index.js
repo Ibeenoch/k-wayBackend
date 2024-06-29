@@ -7,6 +7,7 @@ import { connectDb } from './config/db.js';
 import userRouter from './routes/user.js';
 import postRouter from './routes/post.js';
 import notificationRouter from './routes/notification.js';
+import storyRouter from './routes/story.js';
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/user', userRouter);
 app.use('/post', postRouter);
+app.use('/story', storyRouter);
 app.use('/notification', notificationRouter);
 
 io.on('connection', (socket) => {

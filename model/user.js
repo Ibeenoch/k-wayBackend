@@ -37,6 +37,14 @@ const userSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Post',
     }],
+    stories:  [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Story',
+    }],
+    notification:  [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Notification',
+    }],
     profilePhoto: {
         url: String,
         public_id: String,

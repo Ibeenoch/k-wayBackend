@@ -335,10 +335,8 @@ export const followAndUnfollow = async (req, res) => {
       console.log(me.following, user.followers);
       const token = generateToken(me._id);
       console.log('user followed ', me.followers.length, ' user following ', me.following.length);
-      const mine = { ...me, token }
      return res.status(200).json({
-          mine,
-          user
+      ...me, token
       });
     }
     }else{
@@ -349,10 +347,8 @@ export const followAndUnfollow = async (req, res) => {
       const token = generateToken(me._id);
       // console.log('user followed ', me);
       console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
-      const mine = { ...me, token }
       res.status(200).json({
-          mine,
-          user
+        ...me, token
       });
     }
 
@@ -367,11 +363,8 @@ export const getFollowing = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).populate('following');
    
-   const token = generateToken(user._id);
-   console.log('user followed ', user);
    res.status(200).json({
-       ...user,
-       token
+       following: user.following
    });
 
   } catch (error) {
@@ -383,12 +376,8 @@ export const getFollowing = async (req, res) => {
 export const getFollowers = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).populate('followers');
-   
-    const token = generateToken(user._id);
-    res.status(200).json({
-        ...user,
-        token
-    });
+
+    res.status(200).json({ followers: user.followers });
 
   } catch (error) {
     res.status(500).json({ message: error })
