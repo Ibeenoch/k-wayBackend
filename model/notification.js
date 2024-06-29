@@ -20,6 +20,10 @@ const notificationSchema = new Schema({
     receiver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    },
+    isviewed: {
+        type: Boolean,
+        default: false,
     }
   
 }, {

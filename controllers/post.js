@@ -111,7 +111,7 @@ export const updatePost = async(req, res) => {
                     video: imgurls.length > 0 ? [] : videourls[0],
                     owner: req.user._id,
                 }, { new: true }).populate('owner');
-                console.log('successful')
+
                 res.status(200).json(postUpdate);
         }
            
@@ -120,13 +120,13 @@ export const updatePost = async(req, res) => {
             if(!postExist){
                 return res.status(400).json({ message: "the post was not found"});
             };
-console.log('loo ', postExist)
+
             const postUpdate = await Post.findByIdAndUpdate(req.params.id, {
                 content: req.body.content ? req.body.content : postExist.content,
                 privacy: req.body.privacy ? req.body.privacy : postExist.privacy,
                 owner: req.user._id,
             }, { new: true }).populate('owner');
-            console.log('successful')
+
             res.status(200).json(postUpdate);
         }
         
@@ -207,7 +207,7 @@ export const likePost = async(req, res) => {
             await post.save();
             const findReceiver = await User.findById(post.owner._id);
             const newNofication = await Notification.create({
-                message: `${findReceiver.fullname} liked your post`,
+                message: `${userId.fullname} liked your post`,
                 post: post._id,
                 sender: req.params.userId,
                 receiver: post.owner._id,
@@ -216,7 +216,7 @@ export const likePost = async(req, res) => {
             await findReceiver.save();
 
             const notify = {
-                message: `${findReceiver.fullname} liked your post`,
+                message: `${userId.fullname} liked your post`,
                 post: post._id,
                 sender: req.params.userId,
                 receiver: post.owner._id,
@@ -256,7 +256,7 @@ export const bookmarkPost = async(req, res) => {
             await post.save();
             const findReceiver = await User.findById(post.owner._id);
             const newNofication = await Notification.create({
-                message: `${findReceiver.fullname} bookmark your post`,
+                message: `${userId.fullname} bookmark your post`,
                 post: post._id,
                 sender: req.params.userId,
                 receiver: post.owner._id,
@@ -265,7 +265,7 @@ export const bookmarkPost = async(req, res) => {
             await findReceiver.save();
 
             const notify = {
-                message: `${findReceiver.fullname} bookmarked your post`,
+                message: `${userId.fullname} bookmarked your post`,
                 post: post._id,
                 sender: req.params.userId,
                 receiver: post.owner._id,
@@ -316,7 +316,7 @@ export const rePost = async(req, res) => {
         newPost.allReshare.push(userId._id);
         const findReceiver = await User.findById(post.owner._id);
         const newNofication = await Notification.create({
-            message: `${findReceiver.fullname} reshared your post`,
+            message: `${userId.fullname} reshared your post`,
             post: post._id,
             sender: req.params.userId,
             receiver: post.owner._id,
@@ -325,7 +325,7 @@ export const rePost = async(req, res) => {
         await findReceiver.save();
 
         const notify = {
-            message: `${findReceiver.fullname} reshared your post`,
+            message: `${userId.fullname} reshared your post`,
             post: post._id,
             sender: req.params.userId,
             receiver: post.owner._id,
@@ -346,7 +346,6 @@ export const rePost = async(req, res) => {
 
 export const commentPost = async (req, res) => {
     try {
-        console.log(req.body);
         const post = await Post.findById(req.params.id);
         const user = await User.findById(req.params.userId);
         const io = req.app.get('io');
@@ -366,10 +365,13 @@ export const commentPost = async (req, res) => {
 
         post.comments.push(comment._id);
         await post.save();
-
+        
         const findReceiver = await User.findById(post.owner._id);
+
+        if(post.owner._id.toString() === req.user._id.toString() ){
+            console.log('the owner');
         const newNofication = await Notification.create({
-            message: `${findReceiver.fullname} commented on your post`,
+            message: `${user.fullname} commented on your post`,
             post: post._id,
             sender: req.params.userId,
             receiver: post.owner._id,
@@ -378,12 +380,13 @@ export const commentPost = async (req, res) => {
         await findReceiver.save();
 
         const notify = {
-            message: `${findReceiver.fullname} commented on your post`,
+            message: `${user.fullname} commented on your post`,
             post: post._id,
             sender: req.params.userId,
             receiver: post.owner._id,
         };
         io.emit('postComment', notify);
+        };
 
         const getComment = await Comment.findById(comment._id).populate('owner');
         res.status(201).json(getComment);
@@ -433,7 +436,6 @@ export const deleteCommentPost = async (req, res) => {
 
 export const replyCommentPost = async (req, res) => {
     try {
-        console.log('req body content ', req.body);
         const parentComment = await Comment.findById(req.params.commentId);
         const io = req.app.get('io');
 
@@ -451,9 +453,8 @@ export const replyCommentPost = async (req, res) => {
          await parentComment.save();
 
          
-        const findReceiver = await User.findById(parentComment.owner._id);
         const newNofication = await Notification.create({
-            message: `${findReceiver.fullname} replied your comment`,
+            message: `${req.user.fullname} replied your comment`,
             comment: parentComment._id,
             sender: req.params.userId,
             receiver: parentComment.owner._id,
@@ -462,17 +463,13 @@ export const replyCommentPost = async (req, res) => {
         await findReceiver.save();
 
         const notify = {
-            message: `${findReceiver.fullname} replied your comment`,
+            message: `${req.user.fullname} replied your comment`,
             comment: parentComment._id,
             sender: req.params.userId,
             receiver: parentComment.owner._id,
         };
         io.emit('commentReplied', notify);
         
-        const getComment = await Comment.findById(comment._id).populate('owner');
-        res.status(201).json(getComment);
-    
-
          const getReply = await Comment.findById(reply._id).populate('owner replies');
          res.status(201).json(getReply);      
 
@@ -501,9 +498,8 @@ export const likeAComment = async (req, res) => {
             parentComment.likes.push(req.user._id);
             await parentComment.save();
 
-            const findReceiver = await User.findById(parentComment.owner._id);
             const newNofication = await Notification.create({
-                message: `${findReceiver.fullname} liked your comment`,
+                message: `${req.user.fullname} liked your comment`,
                 comment: parentComment._id,
                 sender: req.params.userId,
                 receiver: parentComment.owner._id,
@@ -512,7 +508,7 @@ export const likeAComment = async (req, res) => {
             await findReceiver.save();
     
             const notify = {
-                message: `${findReceiver.fullname} liked your comment`,
+                message: `${req.user.fullname} liked your comment`,
                 comment: parentComment._id,
                 sender: req.params.userId,
                 receiver: parentComment.owner._id,
@@ -566,7 +562,6 @@ export const allPostComments = async (req, res) => {
             return res.status(404).json({ message: 'post not found'});
         };
 
-        console.log('this are all the post comments ', post, post.comments)
 
         res.status(201).json(post.comments);
 

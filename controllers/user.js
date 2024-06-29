@@ -363,7 +363,7 @@ export const followAndUnfollow = async (req, res) => {
         sender: me._id,
         receiver: user._id,
       };
-      io.emit('foloowed', notify);
+      io.emit('followed', notify);
       
       res.status(200).json({
         ...me, token
