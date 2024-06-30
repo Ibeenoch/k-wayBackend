@@ -39,14 +39,16 @@ io.on('connection', (socket) => {
 
     socket.on('sendMessage', async(message) => {
         console.log('message sent ', message);
+        const chatId = message.chatId;
         const chat = await Chat.create({
             sender: message.sender,
             receiver: message.receiver,
             message: message.message,
-            chatId: message.chatId
+            chatId
         })
 
-        io.emit('receivedMessage', message);
+
+        io.to(chatId).emit('receivedMessage', message);
         console.log('message received ', message);
     })
 
