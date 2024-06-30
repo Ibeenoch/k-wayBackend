@@ -8,6 +8,8 @@ import userRouter from './routes/user.js';
 import postRouter from './routes/post.js';
 import notificationRouter from './routes/notification.js';
 import storyRouter from './routes/story.js';
+import chatRouter from './routes/chat.js';
+import { Chat } from './model/chat.js';
 dotenv.config();
 
 const app = express();
@@ -24,9 +26,30 @@ app.use('/user', userRouter);
 app.use('/post', postRouter);
 app.use('/story', storyRouter);
 app.use('/notification', notificationRouter);
+app.use('/chat', chatRouter);
 
 io.on('connection', (socket) => {
     console.log('new client connected');
+
+    socket.on('joinChat', (roomId) => {
+        socket.join(roomId);
+        console.log('user joined the chat ', roomId)
+
+    })
+
+    socket.on('sendMessage', async(message) => {
+        console.log('message sent ', message);
+        const chat = await Chat.create({
+            sender: message.sender,
+            receiver: message.receiver,
+            message: message.message,
+            chatId: message.chatId
+        })
+
+        io.emit('receivedMessage', message);
+        console.log('message received ', message);
+    })
+
 
     socket.on('disconnect', () => {
         console.log('client disconnected')
