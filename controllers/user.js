@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import Cloudinary from 'cloudinary'
 import { uploader } from '../middleware/cloudinaryUpload.js';
 import userRouter from '../routes/user.js';
+import { Notification } from '../model/notification.js';
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_TOKEN, { expiresIn: '1d' });
@@ -300,79 +301,154 @@ export const changePassword = async (req, res) => {
   }
 }
 
+// export const followAndUnfollow = async (req, res) => {
+//   try {
+//     console.log(req.params);
+//     // others id 
+//     const user = await User.findById(req.params.userId);
+//     // mine
+//     const me = await User.findById(req.user._id);
+//     const io = req.app.get('io');
+//     if(!user){
+//       res.status(404).json('User not found');
+//       return;
+//     }
+
+//     if(me._id === user._id){
+//       console.log('same users ', me._id, ' and ', user._id);
+//       res.status(400).json('the same users');
+//       return;
+//     }
+//     // req.user._id is the id of the person that wants to follow me
+
+//     if(user.followers.includes(req.user._id)){
+//       console.log('this id exist alreay as ', req.user._id);
+//       const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
+//       console.log('found other index ', index);
+//       user.followers.splice(index, 1);
+//       await user.save();
+
+//       if(me.following.includes(user._id)){
+//         console.log('i exist')
+//       const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
+//       console.log('found mine index ', indexMe);
+//       me.following.splice(indexMe, 1);
+//       await me.save();
+//       console.log(me.following, user.followers);
+//       const token = generateToken(me._id);
+//       console.log('user followed ', me.followers.length, ' user following ', me.following.length);
+//      return res.status(200).json({
+//       ...me, token
+//       });
+//     }
+//     }else{
+//       user.followers.push(req.user._id);
+//       me.following.push(user._id);
+//       await user.save();
+//       await me.save();
+//       const token = generateToken(me._id);
+//       // console.log('user followed ', me);
+//       console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
+      
+//       // semd to the user that u followed him
+//       const newNofication = await Notification.create({
+//           message: `${me.fullname} followed you`,
+//           sender: me._id,
+//           receiver: user._id,
+//       });
+//       me.notification.push(newNofication._id);
+//       await me.save();
+
+//       const notify = {
+//         message: `${me.fullname} followed you`,
+//         sender: me._id,
+//         receiver: user._id,
+//       };
+//       io.emit('followed', notify);
+      
+//       res.status(200).json({
+//         ...me, token
+//       });
+//     }
+
+//   } catch (error) {
+//     res.status(500).json({ message: error })
+//     console.log(error)
+//   }
+// }
+
 export const followAndUnfollow = async (req, res) => {
   try {
     console.log(req.params);
-    // others id 
+    // the req params should be the other person id you want to follow, not yours
     const user = await User.findById(req.params.userId);
-    // mine
+    // Mine
     const me = await User.findById(req.user._id);
     const io = req.app.get('io');
-    if(!user){
+    
+    if (!user) {
       res.status(404).json('User not found');
       return;
     }
 
-    if(me._id === user._id){
-      console.log('same users ', me._id, ' and ', user._id);
+    if (me._id.equals(user._id)) {
+      console.log('Same users', me._id, 'and', user._id);
       res.status(400).json('the same users');
       return;
     }
-    // req.user._id is the id of the person that wants to follow me
-
-    if(user.followers.includes(req.user._id)){
-      console.log('this id exist alreay as ', req.user._id);
-      const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
-      console.log('found other index ', index);
-      user.followers.splice(index, 1);
+    
+    // Check if already following
+    if (user.followers.includes(req.user._id)) {
+      console.log('This id exists already as', req.user._id);
+      user.followers = user.followers.filter(f => !f.equals(req.user._id));
+      me.following = me.following.filter(f => !f.equals(user._id));
+      
       await user.save();
-
-      if(me.following.includes(user._id)){
-        console.log('i exist')
-      const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
-      console.log('found mine index ', indexMe);
-      me.following.splice(indexMe, 1);
       await me.save();
+
       console.log(me.following, user.followers);
       const token = generateToken(me._id);
-      console.log('user followed ', me.followers.length, ' user following ', me.following.length);
-     return res.status(200).json({
-      ...me, token
+      console.log('User unfollowed', me.followers.length, 'user following', me.following.length);
+
+      return res.status(200).json({
+        ...me, token
       });
-    }
-    }else{
+
+    } else {
       user.followers.push(req.user._id);
       me.following.push(user._id);
+
       await user.save();
       await me.save();
+
       const token = generateToken(me._id);
-      // console.log('user followed ', me);
-      console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
+      console.log('User push followed', me.followers.length, 'user push following', me.following.length);
       
-      // semd to the user that u followed him
-      const newNofication = await Notification.create({
-          message: `${me.fullname} followed you`,
-          sender: me._id,
-          receiver: user._id,
+      // Send notification
+      const newNotification = await Notification.create({
+        message: `${me.fullname} followed you`,
+        sender: me._id,
+        receiver: user._id,
       });
-      me.notification.push(newNofication._id);
-      await me.save();
+
+      user.notification.push(newNotification._id);
+      await user.save();
 
       const notify = {
         message: `${me.fullname} followed you`,
         sender: me._id,
         receiver: user._id,
       };
+
       io.emit('followed', notify);
       
       res.status(200).json({
         ...me, token
       });
     }
-
   } catch (error) {
-    res.status(500).json({ message: error })
-    console.log(error)
+    res.status(500).json({ message: error.message });
+    console.log(error);
   }
 }
 
