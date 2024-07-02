@@ -139,6 +139,7 @@ export const updatePost = async(req, res) => {
 export const getAllPosts = async(req, res) => {
     try {
         const posts = await Post.find({})
+        .sort({ createdAt: -1 })
         .populate('owner')
         .populate({
             path: 'reShare',

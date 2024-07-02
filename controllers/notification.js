@@ -9,7 +9,7 @@ export const getNotificationsOfAUser = async(req, res) => {
         const notifications = await Notification.find({
             receiver: userId,
         })
-        .sort({ createdAt: 1 })
+        .sort({ createdAt: -1 })
         .populate('sender')
         .populate('receiver')
         .populate('post')
@@ -19,9 +19,10 @@ export const getNotificationsOfAUser = async(req, res) => {
         const count = await Notification.countDocuments({
             receiver: userId,
             isviewed: false
-        })
+        });
+        const toWho = userId
 
-        res.status(200).json({notifications, count});
+        res.status(200).json({notifications, count, toWho});
         
     } catch (error) {
         res.status(500).json({ message: error });

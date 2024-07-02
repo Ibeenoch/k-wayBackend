@@ -17,8 +17,12 @@ const server = createServer(app);
 const io = new Server(server, {
     cors: {
         origin: 'http://localhost:3000',
-        methods: ["GET", "POST", "PUT",]
-    }
+        methods: ["GET", "POST",]
+    },
+    transports: ['websocket', 'polling'],
+    maxHttpBufferSize: 1e6, // Increase the max buffer size if needed
+    pingTimeout: 60000, // Adjust the ping timeout
+    pingInterval: 45000, // Adjust the ping interval
 });
 connectDb();
 
@@ -40,7 +44,11 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         console.log('user joined the chat ', roomId)
 
-    })
+    });
+    // socket.on('joinNotificationRoom', (userId) =>{
+    //     socket.join(userId);
+    //     console.log('user joined notification room ', userId);
+    // })
 
     socket.on('sendMessage', async(message) => {
         console.log('message sent ', message);
