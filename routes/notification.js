@@ -3,8 +3,8 @@ import { getANotification, getNotificationsOfAUser, markNotificationsAsViewed,  
 import { protect } from '../middleware/authMiddleWare.js';
 const notificationRouter = express.Router();
 
-notificationRouter.get('/:userId', protect, getNotificationsOfAUser);
-notificationRouter.put('/:userId', protect, markNotificationsAsViewed);
+notificationRouter.get('/:userId/:postId', protect, getNotificationsOfAUser);
+notificationRouter.put('/:userId/:postId', protect, markNotificationsAsViewed);
 notificationRouter.get('/:id', protect, getANotification);
 
 export default notificationRouter;

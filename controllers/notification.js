@@ -18,10 +18,11 @@ export const getNotificationsOfAUser = async(req, res) => {
 
         const count = await Notification.countDocuments({
             receiver: userId,
+            post: req.params.postId,
             isviewed: false
         });
         const toWho = userId
-
+        console.log('all note ', notifications);
         res.status(200).json({notifications, count, toWho});
         
     } catch (error) {
