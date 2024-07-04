@@ -301,82 +301,6 @@ export const changePassword = async (req, res) => {
   }
 }
 
-// export const followAndUnfollow = async (req, res) => {
-//   try {
-//     console.log(req.params);
-//     // others id 
-//     const user = await User.findById(req.params.userId);
-//     // mine
-//     const me = await User.findById(req.user._id);
-//     const io = req.app.get('io');
-//     if(!user){
-//       res.status(404).json('User not found');
-//       return;
-//     }
-
-//     if(me._id === user._id){
-//       console.log('same users ', me._id, ' and ', user._id);
-//       res.status(400).json('the same users');
-//       return;
-//     }
-//     // req.user._id is the id of the person that wants to follow me
-
-//     if(user.followers.includes(req.user._id)){
-//       console.log('this id exist alreay as ', req.user._id);
-//       const index = user.followers.findIndex((f) => f.toString() === req.user._id.toString());
-//       console.log('found other index ', index);
-//       user.followers.splice(index, 1);
-//       await user.save();
-
-//       if(me.following.includes(user._id)){
-//         console.log('i exist')
-//       const indexMe = me.following.findIndex((f) => f.toString() === user._id.toString());
-//       console.log('found mine index ', indexMe);
-//       me.following.splice(indexMe, 1);
-//       await me.save();
-//       console.log(me.following, user.followers);
-//       const token = generateToken(me._id);
-//       console.log('user followed ', me.followers.length, ' user following ', me.following.length);
-//      return res.status(200).json({
-//       ...me, token
-//       });
-//     }
-//     }else{
-//       user.followers.push(req.user._id);
-//       me.following.push(user._id);
-//       await user.save();
-//       await me.save();
-//       const token = generateToken(me._id);
-//       // console.log('user followed ', me);
-//       console.log('user push followed ', me.followers.length, ' user push following ', me.following.length);
-      
-//       // semd to the user that u followed him
-//       const newNofication = await Notification.create({
-//           message: `${me.fullname} followed you`,
-//           sender: me._id,
-//           receiver: user._id,
-//       });
-//       me.notification.push(newNofication._id);
-//       await me.save();
-
-//       const notify = {
-//         message: `${me.fullname} followed you`,
-//         sender: me._id,
-//         receiver: user._id,
-//       };
-//       io.emit('followed', notify);
-      
-//       res.status(200).json({
-//         ...me, token
-//       });
-//     }
-
-//   } catch (error) {
-//     res.status(500).json({ message: error })
-//     console.log(error)
-//   }
-// }
-
 export const followAndUnfollow = async (req, res) => {
   try {
     console.log(req.params);
@@ -492,6 +416,31 @@ export const getAUser = async (req, res) => {
     res.status(500).json({ message: error })
     console.log(error);
   }
+}
+
+export const searchUser = async (req, res) => {
+  try {
+    const { searchWord } = req.query;
+    const regex = new RegExp(searchWord, 'i'); // i makes it case in sensistive
+    const foundUser = await User.find({
+        $or: [
+          { fullname: { $regex: regex } },
+          { bio: { $regex: regex } },
+          { handle: { $regex: regex } },
+          { profession: { $regex: regex } },
+        ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('posts following followers');
+
+    console.log('user searched ', foundUser);
+
+    res.status(200).json(foundUser)
+
+} catch (error) {
+    res.status(500).json({ message: error });
+    console.log(error)
+}
 }
 
 export const getAllUsers = async (req, res) => {

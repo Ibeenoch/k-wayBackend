@@ -400,6 +400,55 @@ export const commentPost = async (req, res) => {
     }
 }
 
+export const allPostsForAUser = async (req, res) => {
+    try {
+        const post = await Post.find({
+            owner: req.params.userId
+        }).sort({ createdAt: -1 })
+        .populate('owner')
+        .populate({
+            path: 'reShare',
+            populate: [
+                { path: 'user', model: 'User' }, 
+                { path: 'post', model: 'Post' }  
+            ]
+        });
+        console.log('all post for a user ', post);
+
+        res.status(200).json(post)
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+};
+
+export const searchPost = async (req, res) => {
+    try {
+        const { searchWord } = req.query;
+        const regex = new RegExp(searchWord, 'i'); // i makes it case in sensistive
+        const foundPost = await Post.find({
+            content: { $regex: regex }
+        }).sort({ createdAt: -1 })
+        .populate('owner')
+        .populate({
+            path: 'reShare',
+            populate: [
+                { path: 'user', model: 'User' }, 
+                { path: 'post', model: 'Post' }  
+            ]
+        });
+
+        console.log('post searched ', foundPost);
+
+        res.status(200).json(foundPost)
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
 export const editCommentPost = async (req, res) => {
     try {
         const comment = await Comment.findById(req.params.commentId).populate('owner');

@@ -94,5 +94,9 @@ const postSchema = new Schema({
     timestamps: true,
 });
 
+postSchema.index({
+    content: 'text'
+})
+
 export const Comment = mongoose.model('Comment', commentSchema);
 export const Post = mongoose.model('Post', postSchema);
