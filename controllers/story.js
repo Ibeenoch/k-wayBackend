@@ -35,32 +35,27 @@ export const addStory = async(req, res) => {
                 console.log('loo')
                 const story = await Story.create({
                 content,
-                privacy,
                 photos: imgurls.length > 0 ? imgurls : [],
                 video: videourls.length > 0 ? videourls && videourls[0] : {},
                 owner: req.user._id,
-            }).then(async(r) => {
-                const user = await User.findById(req.user._id);
-                user.stories.push(r._id);
-                await user.save();
-                console.log('opooo', r)
-                res.status(201).json(r.populate('owner'));
             })
             
-            }
+            const user = await User.findById(req.user._id);
+            user.stories.push(story._id);
+            await user.save();
+            res.status(201).json(story);
+         }
             
         }else{
             const story = await Story.create({
                 content,
-                privacy,
                 owner: req.user._id,
-            }).then(async(r) => {
-                const user = await User.findById(req.user._id);
-                user.stories.push(r._id);
-                await user.save();
-                console.log('opooo', r)
-                res.status(201).json(r.populate('owner'));
-            });
+            })
+          
+            const user = await User.findById(req.user._id);
+            user.stories.push(story._id);
+            await user.save();
+            res.status(201).json(story);
 
         }
         
@@ -74,6 +69,36 @@ export const getAvailableStories = async(req, res) => {
     try {
         const user = await User.find({}).populate('stories');
         const storiesAvailable = user.filter((s) => s.stories.length > 0);
+        console.log('user stories ', storiesAvailable);
+        // const groupedStories = await Story.aggregate([
+        //     {
+        //       $lookup: {
+        //         from: 'users', // The name of the User collection
+        //         localField: 'owner',
+        //         foreignField: '_id',
+        //         as: 'ownerDetails'
+        //       }
+        //     },
+        //     {
+        //       $unwind: '$ownerDetails'
+        //     },
+        //     {
+        //       $group: {
+        //         _id: '$owner',
+        //         ownerDetails: { $first: '$ownerDetails' },
+        //         stories: { $push: '$$ROOT' }
+        //       }
+        //     },
+        //     {
+        //       $project: {
+        //         _id: 0,
+        //         ownerId: '$_id',
+        //         ownerDetails: 1,
+        //         stories: 1
+        //       }
+        //     }
+        //   ]);
+        //   console.log('find id ', groupedStories.length);
         res.status(200).json(storiesAvailable);
     } catch (error) {
         res.status(500).json({ message: error });
@@ -83,9 +108,23 @@ export const getAvailableStories = async(req, res) => {
 
 export const getAllStoriesForAUser = async(req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate('stories');
+        const story = await Story.find({
+            owner: req.params.userId,
+        }).select('photos owner').populate('owner');
+        const owner = await User.findById(req.params.userId);
+        const arr = [];
+        story.forEach((s) => {
+            arr.push(s.photos)
+        })
+        const photos = arr.flat();
+        const photoUrls = [];
         
-        res.status(200).json(user.stories);
+        photos.forEach((u) => {
+            photoUrls.push(u.url);
+        });
+        console.log('own by ', owner)
+
+        res.status(200).json({photoUrls, owner});
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)

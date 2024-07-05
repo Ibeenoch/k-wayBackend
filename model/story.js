@@ -6,23 +6,16 @@ const storycommentSchema = new Schema({
         ref: 'User',
         required: true
     },
-    post:  {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Post',
-    },
+    photos: [],
+    video: {},
     content: {
         type: String,
-        required: true,
     },
-    privacy: {
-        type: String,
-        default: 'public'
-    },
-    replies: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'StoryComment'
-    }],
     likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    views: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],

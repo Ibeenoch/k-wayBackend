@@ -423,9 +423,50 @@ export const allPostsForAUser = async (req, res) => {
     }
 };
 
+export const getTopTrendingPost = async (req, res) => {
+    try {
+      const post = await Post.aggregate([
+        {
+            $project: {
+                words: {
+                    $split: ["$content", " "]
+                }
+            }
+        },{
+            $unwind: "$words"
+        },
+        {
+            $group: {
+                _id: "$words",
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $sort: {
+                count: -1
+            }
+        },
+        {
+            $limit: 4
+        }
+      ]);
+
+      console.log(post, post.length)
+        res.status(200).json(post)
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+};
+
 export const searchPost = async (req, res) => {
     try {
         const { searchWord } = req.query;
+
+        if(searchWord.length === 0){
+            return;
+        };
         const regex = new RegExp(searchWord, 'i'); // i makes it case in sensistive
         const foundPost = await Post.find({
             content: { $regex: regex }
@@ -439,7 +480,6 @@ export const searchPost = async (req, res) => {
             ]
         });
 
-        console.log('post searched ', foundPost);
 
         res.status(200).json(foundPost)
 

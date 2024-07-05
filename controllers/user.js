@@ -421,7 +421,11 @@ export const getAUser = async (req, res) => {
 export const searchUser = async (req, res) => {
   try {
     const { searchWord } = req.query;
+    if(searchWord.length === 0){
+      return;
+  };
     const regex = new RegExp(searchWord, 'i'); // i makes it case in sensistive
+    // partial search for words either in the fullname, bio, handle, profession
     const foundUser = await User.find({
         $or: [
           { fullname: { $regex: regex } },
@@ -436,6 +440,37 @@ export const searchUser = async (req, res) => {
     console.log('user searched ', foundUser);
 
     res.status(200).json(foundUser)
+
+} catch (error) {
+    res.status(500).json({ message: error });
+    console.log(error)
+}
+}
+
+export const getTopUserTrending = async (req, res) => {
+  try {
+   const user = await User.aggregate([
+    {
+      $project: {
+        email: 1,
+        handle: 1,
+        fullname: 1,
+        profession: 1,
+        folllowersCount: {$size: "$followers"}
+      }
+    },
+    {
+      $sort: {
+        folllowersCount: -1
+      }
+    },
+    {
+      $limit: 4
+    }
+   ]);
+
+   console.log('current user trending ', user, user.length);
+   res.status(200).json(user);
 
 } catch (error) {
     res.status(500).json({ message: error });
