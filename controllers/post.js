@@ -549,6 +549,7 @@ export const replyCommentPost = async (req, res) => {
             sender: req.params.userId,
             receiver: parentComment.owner._id,
         });
+        const findReceiver = await User.findById(parentComment.owner._id);
         findReceiver.notification.push(newNofication._id);
         await findReceiver.save();
 
@@ -571,6 +572,7 @@ export const replyCommentPost = async (req, res) => {
 
 export const likeAComment = async (req, res) => {
     try {
+        // find the comment
         const parentComment = await Comment.findById(req.params.commentId).populate('owner');
         const io = req.app.get('io');
         if(!parentComment){
@@ -594,6 +596,7 @@ export const likeAComment = async (req, res) => {
                 sender: req.params.userId,
                 receiver: parentComment.owner._id,
             });
+            const findReceiver = await User.findById(parentComment.owner._id);
             findReceiver.notification.push(newNofication._id);
             await findReceiver.save();
     
@@ -618,7 +621,7 @@ export const likeAComment = async (req, res) => {
 
 export const allRepliesForAComment = async (req, res) => {
     try {
-        const comment = await Comment.findById(req.params.commentId).populate({
+        const comment = await Comment.findById(req.params.commentId).sort({ createdAt: -1 }).populate({
             path: 'replies',
             populate: {
                 path: 'owner',
@@ -631,7 +634,35 @@ export const allRepliesForAComment = async (req, res) => {
         };
 
         console.log('all comment replies ', comment.replies);
-        res.status(201).json(comment.replies);
+        res.status(200).json(comment.replies);
+
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error)
+    }
+}
+
+export const deleteRepliedComment = async (req, res) => {
+    try {
+        console.log('reply id to delete= ', req.params.repliedId, ' parent comment= ',  req.params.commentId)
+        const parentComment = await Comment.findById(req.params.commentId);
+        const replies = parentComment.replies;
+       const index = replies.findIndex((r) => r._id.toString() === req.params.repliedId );
+       replies.splice(index, 1);
+       await parentComment.save();
+       console.log('result ', parentComment);
+
+       const comment = await Comment.findById(req.params.commentId).populate({
+            path: 'replies',
+            populate: {
+                path: 'owner',
+                model: 'User'
+            }
+        });
+
+       console.log('deleted ', req.params.repliedId);
+       res.status(200).json(req.params.repliedId);
+
 
     } catch (error) {
         res.status(500).json({ message: error });

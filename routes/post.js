@@ -1,7 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleWare.js';
 import upload, { multiUpload } from '../middleware/fileMiddleware.js';
-import { allPostComments, allPostsForAUser, allRepliesForAComment, bookmarkPost, commentPost, createPost, deleteAPost, deleteCommentPost, editCommentPost, getAPost, getAllPosts, getBookmark, getLikes, getReshare, getTopTrendingPost, likeAComment, likePost, rePost, replyCommentPost, searchPost, updatePost } from '../controllers/post.js';
+import { allPostComments, allPostsForAUser, allRepliesForAComment, bookmarkPost, commentPost, createPost, deleteAPost, deleteCommentPost, deleteRepliedComment, editCommentPost, getAPost, getAllPosts, getBookmark, getLikes, getReshare, getTopTrendingPost, likeAComment, likePost, rePost, replyCommentPost, searchPost, updatePost } from '../controllers/post.js';
 
 const postRouter = express.Router();
 
@@ -15,6 +15,7 @@ postRouter.get('/replies/:commentId',  allRepliesForAComment );
 postRouter.put('/updatecomment/:commentId', protect,  editCommentPost );
 postRouter.put('/likecomment/:commentId', protect,  likeAComment );
 postRouter.delete('/deletecomment/:id/:commentId', protect,  deleteCommentPost );
+postRouter.delete('/deleterepliedcomment/:repliedId/:commentId', protect,  deleteRepliedComment );
 postRouter.post('/comment/:id/:userId', protect,  commentPost );
 postRouter.get('/comment/:id', allPostComments );
 postRouter.get('/searchpost', searchPost );
