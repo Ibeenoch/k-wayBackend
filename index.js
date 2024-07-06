@@ -45,10 +45,7 @@ io.on('connection', (socket) => {
         console.log('user joined the chat ', roomId)
 
     });
-    // socket.on('joinNotificationRoom', (userId) =>{
-    //     socket.join(userId);
-    //     console.log('user joined notification room ', userId);
-    // })
+   
 
     socket.on('sendMessage', async(message) => {
         console.log('message sent ', message);

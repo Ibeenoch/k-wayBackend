@@ -168,15 +168,14 @@ export const getAPost = async(req, res) => {
 export const deleteAPost = async(req, res) => {
     try {
         const post = await Post.findById(req.params.id);
-        if(post.owner.toString() !== req.user._id.toString()){
-            return res.status(400).json({message: 'User not authorized to delete this post'});
-        };
+
         const user = await User.findById(req.user._id);
         const index = user.posts.findIndex( (r ) => r._id.toString() === post._id.toString());
         user.posts.splice(index, 1);
         await user.save();
-        const postdeleted = await Post.findByIdAndDelete(req.params.id);
-        res.status(200).json(postdeleted);
+        await Post.findByIdAndDelete(req.params.id);
+        console.log('deleted ', post._id)
+        res.status(200).json(post._id);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
@@ -223,7 +222,6 @@ export const likePost = async(req, res) => {
                 receiver: post.owner._id,
             };
             io.emit('postLiked', notify);
-            console.log('user push like ', post.likes.length);
             res.status(200).json(post);
         }
         
@@ -275,7 +273,6 @@ export const bookmarkPost = async(req, res) => {
             console.log(post);
             res.status(200).json(post);
         }
-        console.log('post.bookmark  ', post.bookmark.length);
         
     } catch (error) {
         res.status(500).json({ message: error });
@@ -292,6 +289,15 @@ export const rePost = async(req, res) => {
             return res.status(404).json({ message: 'post not found'})
         };
 
+        const allReshared = post.allReshare;
+        const hasShared = allReshared.includes(userId._id.toString());
+        const hasShared2 = allReshared.includes(userId._id);
+        console.log('who shared ', hasShared, hasShared2, ' the arr ', userId._id, ' = ', allReshared );
+        if(hasShared || hasShared2){
+            res.status(400).json({ message: 'post already reshared'})
+            return;
+        };
+
         if(!userId){
             return res.status(404).json({ message: 'user not found'})
         };
@@ -299,7 +305,7 @@ export const rePost = async(req, res) => {
             return res.status(400).json({ message: 'already reshared'})
         }
 
-        const newPost = new Post({
+        const newPost =  Post.create({
             content: post.content,
             photos: post.photos,
             video: post.video,
@@ -314,8 +320,10 @@ export const rePost = async(req, res) => {
             }],
             
         });
-        newPost.allReshare.push(userId._id);
+        post.allReshare.push(userId._id);
+        await post.save();
         const findReceiver = await User.findById(post.owner._id);
+        
         const newNofication = await Notification.create({
             message: `${userId.fullname} reshared your post`,
             post: post._id,
@@ -324,7 +332,6 @@ export const rePost = async(req, res) => {
         });
         findReceiver.notification.push(newNofication._id);
         await findReceiver.save();
-
         const notify = {
             message: `${userId.fullname} reshared your post`,
             post: post._id,
@@ -336,7 +343,6 @@ export const rePost = async(req, res) => {
         const repost = await newPost.save().then((post) => {
           return  post.populate('reShare.user reShare.post owner')
         });
-        console.log('reshared length ', newPost.allReshare.length);
         res.status(200).json(repost)
         
     } catch (error) {

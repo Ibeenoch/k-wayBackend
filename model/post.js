@@ -30,10 +30,6 @@ const commentSchema = new Schema({
     timestamps: true,
 })
 
-// commentSchema.post('save', async(doc, next) => {
-//     doc.replies = commentSchema;
-//     next();
-// })
 
 const postSchema = new Schema({
     content: {
