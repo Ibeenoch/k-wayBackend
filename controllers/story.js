@@ -30,6 +30,7 @@ export const addStory = async(req, res) => {
                }  
             }
 
+            console.log('req file  ', imgurls, videourls,  content, uploaded, imgurls.length, videourls.length);
             if(uploaded){
                 console.log('loo')
                 const story = await Story.create({
@@ -68,7 +69,7 @@ export const getAvailableStories = async(req, res) => {
     try {
         const user = await User.find({}).populate('stories');
         const storiesAvailable = user.filter((s) => s.stories.length > 0);
-         res.status(200).json(storiesAvailable);
+       res.status(200).json(storiesAvailable);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
@@ -77,19 +78,13 @@ export const getAvailableStories = async(req, res) => {
 
 export const getAllStoriesForAUser = async(req, res) => {
     try {
-        const storyCount = await Story.findOne({ owner: req.params.userId });
-        storyCount.views++;
-        const noOfViews = storyCount.views;
-        await storyCount.save();
         const story = await Story.find({
             owner: req.params.userId,
         }).select('photos owner').populate('owner');
         const owner = await User.findById(req.params.userId);
-        
         const arr = [];
         story.forEach((s) => {
-            arr.push(s.photos);
-            
+            arr.push(s.photos)
         })
         story.forEach((s) => {
             arr.push(s.video)
@@ -100,8 +95,9 @@ export const getAllStoriesForAUser = async(req, res) => {
         photos.forEach((u) => {
             photoUrls.push(u.url);
         });
+        console.log('own by ', owner)
 
-        res.status(200).json({photoUrls, owner, noOfViews});
+        res.status(200).json({photoUrls, owner});
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
