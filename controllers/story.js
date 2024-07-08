@@ -30,7 +30,6 @@ export const addStory = async(req, res) => {
                }  
             }
 
-            console.log('req file  ', imgurls, videourls,  content, uploaded, imgurls.length, videourls.length);
             if(uploaded){
                 console.log('loo')
                 const story = await Story.create({
@@ -69,37 +68,7 @@ export const getAvailableStories = async(req, res) => {
     try {
         const user = await User.find({}).populate('stories');
         const storiesAvailable = user.filter((s) => s.stories.length > 0);
-        console.log('user stories ', storiesAvailable);
-        // const groupedStories = await Story.aggregate([
-        //     {
-        //       $lookup: {
-        //         from: 'users', // The name of the User collection
-        //         localField: 'owner',
-        //         foreignField: '_id',
-        //         as: 'ownerDetails'
-        //       }
-        //     },
-        //     {
-        //       $unwind: '$ownerDetails'
-        //     },
-        //     {
-        //       $group: {
-        //         _id: '$owner',
-        //         ownerDetails: { $first: '$ownerDetails' },
-        //         stories: { $push: '$$ROOT' }
-        //       }
-        //     },
-        //     {
-        //       $project: {
-        //         _id: 0,
-        //         ownerId: '$_id',
-        //         ownerDetails: 1,
-        //         stories: 1
-        //       }
-        //     }
-        //   ]);
-        //   console.log('find id ', groupedStories.length);
-        res.status(200).json(storiesAvailable);
+         res.status(200).json(storiesAvailable);
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)
@@ -108,13 +77,22 @@ export const getAvailableStories = async(req, res) => {
 
 export const getAllStoriesForAUser = async(req, res) => {
     try {
+        const storyCount = await Story.findOne({ owner: req.params.userId });
+        storyCount.views++;
+        const noOfViews = storyCount.views;
+        await storyCount.save();
         const story = await Story.find({
             owner: req.params.userId,
         }).select('photos owner').populate('owner');
         const owner = await User.findById(req.params.userId);
+        
         const arr = [];
         story.forEach((s) => {
-            arr.push(s.photos)
+            arr.push(s.photos);
+            
+        })
+        story.forEach((s) => {
+            arr.push(s.video)
         })
         const photos = arr.flat();
         const photoUrls = [];
@@ -122,9 +100,8 @@ export const getAllStoriesForAUser = async(req, res) => {
         photos.forEach((u) => {
             photoUrls.push(u.url);
         });
-        console.log('own by ', owner)
 
-        res.status(200).json({photoUrls, owner});
+        res.status(200).json({photoUrls, owner, noOfViews});
     } catch (error) {
         res.status(500).json({ message: error });
         console.log(error)

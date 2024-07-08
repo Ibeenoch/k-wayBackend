@@ -182,6 +182,30 @@ export const deleteAPost = async(req, res) => {
     }
 }
 
+export const aUserPostImages = async(req, res) => {
+    try {
+
+        const post = await Post.find({
+            owner: req.params.userId
+        }).sort({ createdAt: -1 })
+        .populate('owner');
+
+        let arr = [];
+       if(post){
+        const images = post.forEach((res) => {
+            arr.push(res.photos);
+        })
+       }
+    const postImage = arr.flat();
+
+    res.status(200).json(postImage);       
+        
+    } catch (error) {
+        res.status(500).json({ message: error });
+        console.log(error);
+    }
+}
+
 export const likePost = async(req, res) => {
     try {
         const post = await Post.findById(req.params.id).populate('owner');

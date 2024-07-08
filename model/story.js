@@ -19,6 +19,7 @@ const storycommentSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
+    count: Number,
 }, {
     timestamps: true,
 })

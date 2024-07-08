@@ -18,11 +18,10 @@ export const getNotificationsOfAUser = async(req, res) => {
 
         const count = await Notification.countDocuments({
             receiver: userId,
-            post: req.params.postId,
             isviewed: false
         });
         const toWho = userId
-        console.log('all note ', notifications);
+        console.log('getNotificationsOfAUser ', count);
         res.status(200).json({notifications, count, toWho});
         
     } catch (error) {
@@ -45,6 +44,7 @@ export const getNotificationsOfAUser = async(req, res) => {
             isviewed: false
         })
 
+        console.log('markNotificationsAsViewed ', count);
         res.status(200).json(count);
     } catch (error) {
         res.status(500).json({ message: error.message });
