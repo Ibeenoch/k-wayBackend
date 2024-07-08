@@ -86,9 +86,7 @@ export const getAllStoriesForAUser = async(req, res) => {
         story.forEach((s) => {
             arr.push(s.photos)
         })
-        story.forEach((s) => {
-            arr.push(s.video)
-        })
+       
         const photos = arr.flat();
         const photoUrls = [];
         
