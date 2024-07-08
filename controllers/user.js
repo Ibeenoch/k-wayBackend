@@ -59,7 +59,7 @@ try {
       const token = generateToken(newuser._id);
       const user = { email: newuser.email, token, _id: newuser._id };
 
-      const link = `http://localhost:3000/verify/email/${user._id}`;
+      const link = `https://k-way.vercel.app/verify/email/${user._id}`;
       const mailOptions = {
         from: "fredenoch1@gmail.com",
         to: email,
@@ -240,7 +240,7 @@ export const recoveryEmailLink = async (req, res) => {
         },
       });
 
-      const link = `http://localhost:3000/password/reset/${id}`;
+      const link = `https://k-way.vercel.app/password/reset/${id}`;
       const mailOptions = {
         from: "fredenoch1@gmail.com",
         to: email,

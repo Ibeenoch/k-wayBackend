@@ -16,7 +16,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: 'https://k-way.vercel.app/',
         methods: ["GET", "POST",]
     },
     transports: ['websocket', 'polling'],
