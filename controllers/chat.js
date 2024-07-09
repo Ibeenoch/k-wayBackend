@@ -6,7 +6,7 @@ try {
     console.log(req.body)
   const chatId = await ChatId.find();
 
-  if(chatId.length > 0){
+  if(chatId === null || chatId === undefined || chatId.length < 1){
       const newChatId = await ChatId.create({
         userId: req.body.userId,
         myId: req.body.myId,
