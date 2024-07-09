@@ -477,7 +477,7 @@ export const getTopTrendingPost = async (req, res) => {
             }
         },
         {
-            $limit: 4
+            $limit: 8
         }
       ]);
 
