@@ -12,17 +12,26 @@ try {
         myId: req.body.myId,
       });
 
-      console.log('the chatid ', newChatId);
-     res.status(201).json(newChatId._id);
-     return;
-  }
+      if(newChatId){
+        console.log('the chatid ', newChatId);
+        res.status(201).json(newChatId._id);
+        return;
+      }
+      
+  }else{
+
+
 
   const findChatId = chatId.find((c) => {
     if((c.userId === req.body.userId && c.myId === req.body.myId) || (c.myId === req.body.userId && c.userId === req.body.myId)){
       return true;
     }
-  })
+  });
+
+  console.log('the findChatId ', findChatId);
+
   res.status(200).json(findChatId._id);
+};
 
 } catch (error) {
     res.status(500).json({ message: error });
