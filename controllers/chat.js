@@ -3,8 +3,8 @@ import { ChatId } from "../model/chatId.js";
 
 export const findChat = async(req, res) => {
 try {
-    console.log(req.body)
   const chatId = await ChatId.find();
+  console.log('chatId ', chatId)
 
   if(chatId === null || chatId === undefined || chatId.length < 1){
       const newChatId = await ChatId.create({
@@ -27,6 +27,19 @@ try {
       return true;
     }
   });
+
+              if(findChatId === undefined){
+                const newChatId = await ChatId.create({
+                  userId: req.body.userId,
+                  myId: req.body.myId,
+                });
+
+                if(newChatId){
+                  console.log('the chatid ', newChatId);
+                  res.status(201).json(newChatId._id);
+                  return;
+                }
+              }
 
   console.log('the findChatId ', findChatId);
 
