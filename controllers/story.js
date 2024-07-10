@@ -4,6 +4,7 @@ import { User } from "../model/user.js";
 
 export const addStory = async(req, res) => {
     try {
+        console.log(req.body);
         const { content, privacy } = req.body;
         
 
